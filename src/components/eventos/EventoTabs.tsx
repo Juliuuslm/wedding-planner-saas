@@ -1,0 +1,195 @@
+'use client'
+
+import React from 'react'
+import Link from 'next/link'
+import {
+  DollarSign,
+  ListChecks,
+  Briefcase,
+  FileSignature,
+  Palette,
+  Globe,
+} from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback, AvatarGroup } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import type { Evento, Cliente, Paquete } from '@/types'
+
+interface EventoTabsProps {
+  evento: Evento
+  cliente: Cliente | undefined
+  paquete: Paquete | undefined
+}
+
+const EQUIPO_VISUAL = [
+  { initials: 'AM', nombre: 'Andrea Morales',   rol: 'Coordinadora principal' },
+  { initials: 'LP', nombre: 'Luisa Pérez',      rol: 'Asistente de coordinación' },
+  { initials: 'MR', nombre: 'Miguel Rodríguez', rol: 'Logística' },
+]
+
+function PlaceholderTab({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+        <Icon className="h-7 w-7 text-text-muted" />
+      </div>
+      <p className="mt-4 font-semibold text-text-primary">{label}</p>
+      <p className="mt-1 text-sm text-text-muted">
+        Este módulo se construirá en la próxima sesión.
+      </p>
+    </div>
+  )
+}
+
+export function EventoTabs({ evento, cliente, paquete }: EventoTabsProps) {
+  const fechaLarga = new Date(evento.fecha).toLocaleDateString('es-MX', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
+
+  return (
+    <Tabs defaultValue="general">
+      <TabsList variant="line" className="w-full justify-start overflow-x-auto">
+        <TabsTrigger value="general">General</TabsTrigger>
+        <TabsTrigger value="presupuesto">Presupuesto</TabsTrigger>
+        <TabsTrigger value="timeline">Timeline</TabsTrigger>
+        <TabsTrigger value="proveedores">Proveedores</TabsTrigger>
+        <TabsTrigger value="contratos">Contratos</TabsTrigger>
+        <TabsTrigger value="diseno">Diseño</TabsTrigger>
+        <TabsTrigger value="portal">Portal</TabsTrigger>
+      </TabsList>
+
+      {/* ── General ────────────────────────────────────────────────── */}
+      <TabsContent value="general" className="mt-6">
+        <div className="grid gap-6 lg:grid-cols-3">
+
+          {/* Left: datos del evento + notas */}
+          <div className="space-y-6 lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold">Datos del evento</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {([
+                  { label: 'Fecha',       value: <span className="capitalize">{fechaLarga}</span> },
+                  { label: 'Venue',       value: evento.venue ?? 'Por confirmar' },
+                  { label: 'Invitados',   value: evento.numeroInvitados ? `${evento.numeroInvitados} personas` : '—' },
+                  { label: 'Tipo',        value: evento.tipo.charAt(0).toUpperCase() + evento.tipo.slice(1) },
+                  { label: 'Paquete',     value: paquete?.nombre ?? 'Sin paquete' },
+                  { label: 'Presupuesto', value: new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(evento.presupuestoTotal) },
+                ] as { label: string; value: React.ReactNode }[]).map(({ label, value }, i, arr) => (
+                  <div key={label}>
+                    <div className="flex items-start justify-between gap-4 py-0.5">
+                      <span className="shrink-0 text-sm text-text-muted">{label}</span>
+                      <span className="text-right text-sm font-medium text-text-primary">{value}</span>
+                    </div>
+                    {i < arr.length - 1 && <Separator className="mt-2" />}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold">Notas del evento</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-relaxed text-text-secondary">
+                  {evento.notas ?? 'Sin notas registradas.'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right: cliente + equipo */}
+          <div className="space-y-6">
+            {cliente && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-semibold">Cliente</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-brand text-xs font-semibold text-gold">
+                        {(cliente.nombre[0] + cliente.apellido[0]).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-text-primary">
+                        {cliente.nombre} {cliente.apellido}
+                      </p>
+                      <p className="text-xs text-text-muted">{cliente.email}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    render={<Link href={`/clientes/${cliente.id}`} />}
+                  >
+                    Ver perfil del cliente
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold">Equipo asignado</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <AvatarGroup>
+                  {EQUIPO_VISUAL.map((m) => (
+                    <Avatar key={m.initials} className="h-8 w-8">
+                      <AvatarFallback className="bg-brand text-xs text-gold">
+                        {m.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </AvatarGroup>
+                <ul className="space-y-2 pt-1">
+                  {EQUIPO_VISUAL.map((m) => (
+                    <li key={m.initials} className="flex items-center gap-2 text-sm">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="bg-brand text-[10px] text-gold">
+                          {m.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <span className="font-medium text-text-primary">{m.nombre}</span>
+                        <span className="ml-1.5 text-xs text-text-muted">{m.rol}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+        </div>
+      </TabsContent>
+
+      {/* ── Placeholder tabs ────────────────────────────────────────── */}
+      <TabsContent value="presupuesto" className="mt-6">
+        <PlaceholderTab icon={DollarSign} label="Módulo de Presupuesto" />
+      </TabsContent>
+      <TabsContent value="timeline" className="mt-6">
+        <PlaceholderTab icon={ListChecks} label="Timeline y Tareas" />
+      </TabsContent>
+      <TabsContent value="proveedores" className="mt-6">
+        <PlaceholderTab icon={Briefcase} label="Proveedores y ODPs" />
+      </TabsContent>
+      <TabsContent value="contratos" className="mt-6">
+        <PlaceholderTab icon={FileSignature} label="Contratos" />
+      </TabsContent>
+      <TabsContent value="diseno" className="mt-6">
+        <PlaceholderTab icon={Palette} label="Diseño e Inspiración" />
+      </TabsContent>
+      <TabsContent value="portal" className="mt-6">
+        <PlaceholderTab icon={Globe} label="Portal del Cliente" />
+      </TabsContent>
+    </Tabs>
+  )
+}
