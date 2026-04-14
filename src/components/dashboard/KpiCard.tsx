@@ -20,7 +20,7 @@ export function KpiCard({
   valueClassName,
 }: KpiCardProps) {
   return (
-    <Card>
+    <Card className="transition-shadow hover:shadow-md">
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">

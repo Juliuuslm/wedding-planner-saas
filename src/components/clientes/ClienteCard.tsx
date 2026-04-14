@@ -31,7 +31,7 @@ export function ClienteCard({ cliente, evento }: ClienteCardProps) {
     : null
 
   return (
-    <Card>
+    <Card className="transition-shadow hover:shadow-md">
       <CardContent className="pt-6">
         <div className="space-y-4">
           {/* Header: avatar + nombre + badge */}

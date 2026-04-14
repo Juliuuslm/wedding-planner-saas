@@ -117,37 +117,20 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* ── KPI Cards ─────────────────────────────────────────────── */}
+      {/* ── KPI Cards — staggered entrance ────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard
-          label="Eventos activos"
-          value={eventosActivos.length}
-          description={`De ${mockEventos.length} en total`}
-          icon={CalendarHeart}
-          iconClassName="bg-gold/10 text-gold"
-        />
-        <KpiCard
-          label="Tareas pendientes"
-          value={tareasPendientes.length}
-          description="Próximas a vencer"
-          icon={CheckSquare}
-          iconClassName="bg-brand/10 text-brand"
-        />
-        <KpiCard
-          label="Pagos pendientes"
-          value={formatMXN(montoPagos)}
-          description="En líneas sin saldar"
-          icon={CreditCard}
-          iconClassName="bg-warning/10 text-warning"
-          valueClassName="text-xl"
-        />
-        <KpiCard
-          label="ODPs por confirmar"
-          value={odpsCount}
-          description="Proveedores pendientes"
-          icon={AlertTriangle}
-          iconClassName="bg-danger/10 text-danger"
-        />
+        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '0ms', animationDuration: '350ms' }}>
+          <KpiCard label="Eventos activos" value={eventosActivos.length} description={`De ${mockEventos.length} en total`} icon={CalendarHeart} iconClassName="bg-gold/10 text-gold" />
+        </div>
+        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '80ms', animationDuration: '350ms' }}>
+          <KpiCard label="Tareas pendientes" value={tareasPendientes.length} description="Próximas a vencer" icon={CheckSquare} iconClassName="bg-brand/10 text-brand" />
+        </div>
+        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '160ms', animationDuration: '350ms' }}>
+          <KpiCard label="Pagos pendientes" value={formatMXN(montoPagos)} description="En líneas sin saldar" icon={CreditCard} iconClassName="bg-warning/10 text-warning" valueClassName="text-xl" />
+        </div>
+        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '240ms', animationDuration: '350ms' }}>
+          <KpiCard label="ODPs por confirmar" value={odpsCount} description="Proveedores pendientes" icon={AlertTriangle} iconClassName="bg-danger/10 text-danger" />
+        </div>
       </div>
 
       {/* ── Eventos activos ───────────────────────────────────────── */}

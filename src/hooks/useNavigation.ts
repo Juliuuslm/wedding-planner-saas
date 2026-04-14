@@ -9,7 +9,7 @@ import {
   type BreadcrumbItem,
   type ContextualAction,
 } from '@/lib/nav-config'
-import { mockEventos } from '@/data/mock'
+import { mockEventos, mockClientes, mockProveedores } from '@/data/mock'
 
 export interface NavigationState {
   activeSegment: string
@@ -58,6 +58,22 @@ function resolveBreadcrumbs(segments: string[]): BreadcrumbItem[] {
     const evento = mockEventos.find((e) => e.id === secondSegment)
     if (evento) {
       breadcrumbs.push({ label: evento.nombre })
+      return breadcrumbs
+    }
+  }
+
+  if (firstSegment === 'clientes') {
+    const cliente = mockClientes.find((c) => c.id === secondSegment)
+    if (cliente) {
+      breadcrumbs.push({ label: `${cliente.nombre} ${cliente.apellido}` })
+      return breadcrumbs
+    }
+  }
+
+  if (firstSegment === 'proveedores') {
+    const proveedor = mockProveedores.find((p) => p.id === secondSegment)
+    if (proveedor) {
+      breadcrumbs.push({ label: proveedor.nombre })
       return breadcrumbs
     }
   }
