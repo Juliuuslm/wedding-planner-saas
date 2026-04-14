@@ -4,7 +4,6 @@ import React from 'react'
 import Link from 'next/link'
 import {
   DollarSign,
-  FileSignature,
   Palette,
   Globe,
 } from 'lucide-react'
@@ -16,7 +15,8 @@ import { Button } from '@/components/ui/button'
 import { PresupuestoTab } from '@/components/presupuesto/PresupuestoTab'
 import { TimelineTab } from '@/components/timeline/TimelineTab'
 import { ProveedoresTab } from '@/components/proveedores/ProveedoresTab'
-import type { Evento, Cliente, Paquete, LineaPresupuesto, Tarea, ODP, Proveedor } from '@/types'
+import { ContratosTab } from '@/components/contratos/ContratosTab'
+import type { Evento, Cliente, Paquete, LineaPresupuesto, Tarea, ODP, Proveedor, Contrato } from '@/types'
 
 interface EventoTabsProps {
   evento: Evento
@@ -26,6 +26,7 @@ interface EventoTabsProps {
   tareas: Tarea[]
   odps: ODP[]
   proveedores: Proveedor[]
+  contratos: Contrato[]
 }
 
 const EQUIPO_VISUAL = [
@@ -48,7 +49,7 @@ function PlaceholderTab({ icon: Icon, label }: { icon: React.ElementType; label:
   )
 }
 
-export function EventoTabs({ evento, cliente, paquete, lineas, tareas, odps, proveedores }: EventoTabsProps) {
+export function EventoTabs({ evento, cliente, paquete, lineas, tareas, odps, proveedores, contratos }: EventoTabsProps) {
   const fechaLarga = new Date(evento.fecha).toLocaleDateString('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
@@ -187,7 +188,12 @@ export function EventoTabs({ evento, cliente, paquete, lineas, tareas, odps, pro
         <ProveedoresTab evento={evento} odps={odps} proveedores={proveedores} />
       </TabsContent>
       <TabsContent value="contratos" className="mt-6">
-        <PlaceholderTab icon={FileSignature} label="Contratos" />
+        <ContratosTab
+          evento={evento}
+          contratos={contratos}
+          cliente={cliente}
+          paquete={paquete}
+        />
       </TabsContent>
       <TabsContent value="diseno" className="mt-6">
         <PlaceholderTab icon={Palette} label="Diseño e Inspiración" />
