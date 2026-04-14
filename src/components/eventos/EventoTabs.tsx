@@ -4,7 +4,6 @@ import React from 'react'
 import Link from 'next/link'
 import {
   DollarSign,
-  ListChecks,
   Briefcase,
   FileSignature,
   Palette,
@@ -16,13 +15,15 @@ import { Avatar, AvatarFallback, AvatarGroup } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { PresupuestoTab } from '@/components/presupuesto/PresupuestoTab'
-import type { Evento, Cliente, Paquete, LineaPresupuesto } from '@/types'
+import { TimelineTab } from '@/components/timeline/TimelineTab'
+import type { Evento, Cliente, Paquete, LineaPresupuesto, Tarea } from '@/types'
 
 interface EventoTabsProps {
   evento: Evento
   cliente: Cliente | undefined
   paquete: Paquete | undefined
   lineas: LineaPresupuesto[]
+  tareas: Tarea[]
 }
 
 const EQUIPO_VISUAL = [
@@ -45,7 +46,7 @@ function PlaceholderTab({ icon: Icon, label }: { icon: React.ElementType; label:
   )
 }
 
-export function EventoTabs({ evento, cliente, paquete, lineas }: EventoTabsProps) {
+export function EventoTabs({ evento, cliente, paquete, lineas, tareas }: EventoTabsProps) {
   const fechaLarga = new Date(evento.fecha).toLocaleDateString('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
@@ -178,7 +179,7 @@ export function EventoTabs({ evento, cliente, paquete, lineas }: EventoTabsProps
         <PresupuestoTab evento={evento} lineas={lineas} />
       </TabsContent>
       <TabsContent value="timeline" className="mt-6">
-        <PlaceholderTab icon={ListChecks} label="Timeline y Tareas" />
+        <TimelineTab evento={evento} tareas={tareas} />
       </TabsContent>
       <TabsContent value="proveedores" className="mt-6">
         <PlaceholderTab icon={Briefcase} label="Proveedores y ODPs" />
