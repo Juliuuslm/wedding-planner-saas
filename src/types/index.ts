@@ -126,6 +126,7 @@ export interface Tarea {
   titulo: string
   descripcion?: string
   responsable?: string
+  fechaInicio?: string     // ISO 8601, start of task bar in Gantt
   fechaVencimiento: string // ISO 8601
   estado: EstadoTarea
   fase: string
