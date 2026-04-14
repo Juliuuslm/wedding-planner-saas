@@ -15,12 +15,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarGroup } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
-import type { Evento, Cliente, Paquete } from '@/types'
+import { PresupuestoTab } from '@/components/presupuesto/PresupuestoTab'
+import type { Evento, Cliente, Paquete, LineaPresupuesto } from '@/types'
 
 interface EventoTabsProps {
   evento: Evento
   cliente: Cliente | undefined
   paquete: Paquete | undefined
+  lineas: LineaPresupuesto[]
 }
 
 const EQUIPO_VISUAL = [
@@ -43,7 +45,7 @@ function PlaceholderTab({ icon: Icon, label }: { icon: React.ElementType; label:
   )
 }
 
-export function EventoTabs({ evento, cliente, paquete }: EventoTabsProps) {
+export function EventoTabs({ evento, cliente, paquete, lineas }: EventoTabsProps) {
   const fechaLarga = new Date(evento.fecha).toLocaleDateString('es-MX', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
@@ -173,7 +175,7 @@ export function EventoTabs({ evento, cliente, paquete }: EventoTabsProps) {
 
       {/* ── Placeholder tabs ────────────────────────────────────────── */}
       <TabsContent value="presupuesto" className="mt-6">
-        <PlaceholderTab icon={DollarSign} label="Módulo de Presupuesto" />
+        <PresupuestoTab evento={evento} lineas={lineas} />
       </TabsContent>
       <TabsContent value="timeline" className="mt-6">
         <PlaceholderTab icon={ListChecks} label="Timeline y Tareas" />
