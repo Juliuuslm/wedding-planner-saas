@@ -133,6 +133,7 @@ export function EventoTabs({ evento, cliente, paquete, lineas, tareas, odps, pro
                     size="sm"
                     variant="outline"
                     className="w-full"
+                    nativeButton={false}
                     render={<Link href={`/clientes/${cliente.id}`} />}
                   >
                     Ver perfil del cliente

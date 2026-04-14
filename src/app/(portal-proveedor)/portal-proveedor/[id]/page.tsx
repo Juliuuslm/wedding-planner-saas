@@ -131,6 +131,7 @@ export default async function PortalProveedorPage({ params }: Props) {
                           size="sm"
                           variant="outline"
                           className="shrink-0"
+                          nativeButton={false}
                           render={<Link href={`/portal-proveedor/${id}/odp/${odp.id}`} />}
                         >
                           Ver detalle

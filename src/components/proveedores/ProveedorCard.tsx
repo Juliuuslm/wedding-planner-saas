@@ -91,6 +91,7 @@ export function ProveedorCard({ proveedor }: { proveedor: Proveedor }) {
           size="sm"
           variant="outline"
           className="mt-auto w-full"
+          nativeButton={false}
           render={<Link href={`/proveedores/${proveedor.id}`} />}
         >
           Ver perfil

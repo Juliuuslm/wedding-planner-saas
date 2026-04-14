@@ -71,6 +71,7 @@ export function ClienteCard({ cliente, evento }: ClienteCardProps) {
             size="sm"
             variant="outline"
             className="w-full"
+            nativeButton={false}
             render={<Link href={`/clientes/${cliente.id}`} />}
           >
             Ver perfil

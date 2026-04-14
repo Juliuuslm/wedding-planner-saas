@@ -73,6 +73,7 @@ export function EventoCard({ evento, cliente }: { evento: Evento; cliente: Clien
             size="sm"
             variant="outline"
             className="w-full"
+            nativeButton={false}
             render={<Link href={`/eventos/${evento.id}`} />}
           >
             Gestionar

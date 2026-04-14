@@ -74,7 +74,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
 
       {/* Contextual action */}
       {contextualAction && (
-        <Button size="sm" render={<Link href={contextualAction.href} />}>
+        <Button size="sm" nativeButton={false} render={<Link href={contextualAction.href} />}>
           <Plus className="mr-1.5 h-4 w-4" />
           {contextualAction.label}
         </Button>

@@ -77,6 +77,7 @@ export function EventoCard({ evento, cliente }: EventoCardProps) {
             size="sm"
             variant="outline"
             className="w-full"
+            nativeButton={false}
             render={<Link href={`/eventos/${evento.id}`} />}
           >
             Ver evento

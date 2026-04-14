@@ -35,6 +35,7 @@ export function EventoHeader({ evento, cliente, paquete }: EventoHeaderProps) {
         size="sm"
         variant="ghost"
         className="-ml-1 text-text-secondary"
+        nativeButton={false}
         render={<Link href="/eventos" />}
       >
         <ArrowLeft className="mr-1.5 h-4 w-4" />

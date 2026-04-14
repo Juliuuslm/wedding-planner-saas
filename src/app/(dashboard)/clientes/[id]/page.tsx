@@ -101,6 +101,7 @@ export default async function ClientePerfilPage({ params }: Props) {
         size="sm"
         variant="ghost"
         className="-ml-1 text-text-secondary"
+        nativeButton={false}
         render={<Link href="/clientes" />}
       >
         <ArrowLeft className="mr-1.5 h-4 w-4" />
@@ -194,6 +195,7 @@ export default async function ClientePerfilPage({ params }: Props) {
                     size="sm"
                     variant="outline"
                     className="w-full"
+                    nativeButton={false}
                     render={<Link href={`/eventos/${evento.id}`} />}
                   >
                     Ver evento
