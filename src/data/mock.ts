@@ -222,67 +222,86 @@ export const mockProveedores: Proveedor[] = [
 // ============================================================
 
 export const mockLineasPresupuesto: LineaPresupuesto[] = [
+  // VENUE (2)
   {
-    id: 'linea-1',
-    eventoId: 'evento-1',
-    categoria: 'venue',
+    id: 'linea-1', eventoId: 'evento-1', categoria: 'venue',
     concepto: 'Renta de hacienda (12 horas)',
-    montoEstimado: 120000,
-    montoReal: 115000,
-    montoPagado: 57500,
-    estado: 'pagado_parcial',
+    montoEstimado: 120000, montoReal: 115000, montoPagado: 57500, estado: 'pagado_parcial',
   },
   {
-    id: 'linea-2',
-    eventoId: 'evento-1',
-    categoria: 'catering',
-    concepto: 'Banquete 180 personas',
-    proveedorId: 'proveedor-3',
-    montoEstimado: 153000,
-    montoReal: 153000,
-    montoPagado: 76500,
-    estado: 'pagado_parcial',
+    id: 'linea-2', eventoId: 'evento-1', categoria: 'venue',
+    concepto: 'Depósito por daños (reembolsable)',
+    montoEstimado: 15000, montoReal: 15000, montoPagado: 15000, estado: 'pagado',
+  },
+  // CATERING (3)
+  {
+    id: 'linea-3', eventoId: 'evento-1', categoria: 'catering',
+    concepto: 'Banquete 180 personas', proveedorId: 'proveedor-3',
+    montoEstimado: 153000, montoReal: 153000, montoPagado: 76500, estado: 'pagado_parcial',
   },
   {
-    id: 'linea-3',
-    eventoId: 'evento-1',
-    categoria: 'floreria',
-    concepto: 'Flores y arreglos completos',
-    proveedorId: 'proveedor-1',
-    montoEstimado: 38000,
-    montoReal: 40000,
-    montoPagado: 40000,
-    estado: 'pagado',
+    id: 'linea-4', eventoId: 'evento-1', categoria: 'catering',
+    concepto: 'Barra de cócteles premium (5 horas)', proveedorId: 'proveedor-3',
+    montoEstimado: 25000, montoPagado: 0, estado: 'pendiente',
   },
   {
-    id: 'linea-4',
-    eventoId: 'evento-1',
-    categoria: 'fotografia',
-    concepto: 'Fotografía y video',
-    proveedorId: 'proveedor-2',
-    montoEstimado: 45000,
-    montoPagado: 0,
-    estado: 'pendiente',
+    id: 'linea-5', eventoId: 'evento-1', categoria: 'catering',
+    concepto: 'Pastel de bodas — 8 pisos',
+    montoEstimado: 12000, montoReal: 12500, montoPagado: 12500, estado: 'pagado',
+  },
+  // FLORERÍA (3)
+  {
+    id: 'linea-6', eventoId: 'evento-1', categoria: 'floreria',
+    concepto: 'Flores y arreglos completos', proveedorId: 'proveedor-1',
+    montoEstimado: 38000, montoReal: 40000, montoPagado: 40000, estado: 'pagado',
   },
   {
-    id: 'linea-5',
-    eventoId: 'evento-1',
-    categoria: 'musica',
-    concepto: 'Orquesta para ceremonia y recepción',
-    proveedorId: 'proveedor-4',
-    montoEstimado: 28000,
-    montoPagado: 14000,
-    estado: 'pagado_parcial',
+    id: 'linea-7', eventoId: 'evento-1', categoria: 'floreria',
+    concepto: 'Bouquet novia y damas de honor', proveedorId: 'proveedor-1',
+    montoEstimado: 8500, montoReal: 8500, montoPagado: 8500, estado: 'pagado',
   },
   {
-    id: 'linea-6',
-    eventoId: 'evento-1',
-    categoria: 'decoracion',
-    concepto: 'Decoración y ambientación completa',
-    proveedorId: 'proveedor-5',
-    montoEstimado: 55000,
-    montoPagado: 0,
-    estado: 'pendiente',
+    id: 'linea-8', eventoId: 'evento-1', categoria: 'floreria',
+    concepto: 'Centros de mesa (18 mesas)', proveedorId: 'proveedor-1',
+    montoEstimado: 9000, montoPagado: 0, estado: 'pendiente',
+  },
+  // FOTOGRAFÍA (3)
+  {
+    id: 'linea-9', eventoId: 'evento-1', categoria: 'fotografia',
+    concepto: 'Fotografía y video (10 horas)', proveedorId: 'proveedor-2',
+    montoEstimado: 45000, montoPagado: 0, estado: 'pendiente',
+  },
+  {
+    id: 'linea-10', eventoId: 'evento-1', categoria: 'fotografia',
+    concepto: 'Sesión previa (e-session)', proveedorId: 'proveedor-2',
+    montoEstimado: 15000, montoReal: 15000, montoPagado: 15000, estado: 'pagado',
+  },
+  {
+    id: 'linea-11', eventoId: 'evento-1', categoria: 'fotografia',
+    concepto: 'Foto booth interactivo',
+    montoEstimado: 12000, montoPagado: 0, estado: 'pendiente',
+  },
+  // MÚSICA (2)
+  {
+    id: 'linea-12', eventoId: 'evento-1', categoria: 'musica',
+    concepto: 'Orquesta para ceremonia y recepción', proveedorId: 'proveedor-4',
+    montoEstimado: 28000, montoPagado: 14000, estado: 'pagado_parcial',
+  },
+  {
+    id: 'linea-13', eventoId: 'evento-1', categoria: 'musica',
+    concepto: 'DJ para after party (4 horas)',
+    montoEstimado: 18000, montoPagado: 0, estado: 'pendiente',
+  },
+  // DECORACIÓN (2)
+  {
+    id: 'linea-14', eventoId: 'evento-1', categoria: 'decoracion',
+    concepto: 'Decoración y ambientación completa', proveedorId: 'proveedor-5',
+    montoEstimado: 55000, montoPagado: 0, estado: 'pendiente',
+  },
+  {
+    id: 'linea-15', eventoId: 'evento-1', categoria: 'decoracion',
+    concepto: 'Iluminación ambiental LED', proveedorId: 'proveedor-5',
+    montoEstimado: 20000, montoPagado: 10000, estado: 'pagado_parcial',
   },
 ]
 
