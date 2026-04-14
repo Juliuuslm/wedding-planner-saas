@@ -78,10 +78,17 @@ export interface Proveedor {
   id: string
   nombre: string
   categoria: CategoriaProveedor
+  contacto?: string        // nombre de la persona de contacto
   email: string
   telefono: string
+  whatsapp?: string
+  sitioWeb?: string
+  descripcion?: string     // descripción breve del servicio
+  servicios?: string[]     // lista de servicios que ofrece
   precioBase?: number
-  calificacion: number // 1-5
+  precioMin?: number       // rango mínimo de precio
+  precioMax?: number       // rango máximo de precio
+  calificacion: number     // 1-5
   foto?: string
   notas?: string
   creadoEn: string
