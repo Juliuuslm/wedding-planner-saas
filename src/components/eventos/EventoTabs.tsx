@@ -4,7 +4,6 @@ import React from 'react'
 import Link from 'next/link'
 import {
   DollarSign,
-  Palette,
   Globe,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -16,6 +15,7 @@ import { PresupuestoTab } from '@/components/presupuesto/PresupuestoTab'
 import { TimelineTab } from '@/components/timeline/TimelineTab'
 import { ProveedoresTab } from '@/components/proveedores/ProveedoresTab'
 import { ContratosTab } from '@/components/contratos/ContratosTab'
+import { DisenoTab } from '@/components/diseno/DisenoTab'
 import type { Evento, Cliente, Paquete, LineaPresupuesto, Tarea, ODP, Proveedor, Contrato } from '@/types'
 
 interface EventoTabsProps {
@@ -196,7 +196,7 @@ export function EventoTabs({ evento, cliente, paquete, lineas, tareas, odps, pro
         />
       </TabsContent>
       <TabsContent value="diseno" className="mt-6">
-        <PlaceholderTab icon={Palette} label="Diseño e Inspiración" />
+        <DisenoTab evento={evento} />
       </TabsContent>
       <TabsContent value="portal" className="mt-6">
         <PlaceholderTab icon={Globe} label="Portal del Cliente" />
