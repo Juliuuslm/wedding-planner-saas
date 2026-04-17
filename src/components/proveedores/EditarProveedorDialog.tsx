@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { updateProveedor } from '@/lib/api/proveedores'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { Proveedor, CategoriaProveedor } from '@/types'
 
 const CATEGORIAS: { value: CategoriaProveedor; label: string }[] = [
@@ -66,7 +67,7 @@ export function EditarProveedorDialog({ proveedor }: EditarProveedorDialogProps)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!nombre.trim() || !email.trim()) {
-      alert('Por favor completa nombre y correo.')
+      toastError('Campos requeridos', 'Nombre y correo son obligatorios.')
       return
     }
     setLoading(true)
@@ -82,10 +83,11 @@ export function EditarProveedorDialog({ proveedor }: EditarProveedorDialogProps)
         notas: notas || undefined,
       })
       setOpen(false)
+      toastSuccess('Proveedor actualizado', `${nombre} fue actualizado correctamente.`)
       router.refresh()
     } catch (err) {
       console.error('Error al actualizar proveedor:', err)
-      alert('Error al actualizar el proveedor. Intenta de nuevo.')
+      toastError('Error al actualizar', 'Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

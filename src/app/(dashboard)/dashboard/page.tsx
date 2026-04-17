@@ -6,6 +6,8 @@ import {
   CreditCard,
   AlertTriangle,
   TriangleAlert,
+  Plus,
+  Users,
 } from 'lucide-react'
 import {
   getEventos,
@@ -14,6 +16,7 @@ import {
   getPresupuestoByEvento,
   getODPsByEvento,
   getContratos,
+  getPlanner,
 } from '@/lib/data'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { EventoCard } from '@/components/dashboard/EventoCard'
@@ -26,6 +29,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -61,10 +66,11 @@ const ESTADO_TAREA_STYLE: Record<string, { label: string; className: string }> =
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  const [allEventos, allClientes, allContratos] = await Promise.all([
+  const [allEventos, allClientes, allContratos, planner] = await Promise.all([
     getEventos(),
     getClientes(),
     getContratos(),
+    getPlanner(),
   ])
 
   const eventosActivos = allEventos.filter((e) => e.estado === 'activo')
@@ -128,15 +134,29 @@ export default async function DashboardPage() {
     <div className="space-y-8">
 
       {/* ── Welcome ──────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">
-          Hola, Andrea 👋
-        </h1>
-        <p className="mt-1 text-sm capitalize text-text-secondary">{hoy}</p>
-        <p className="text-sm text-text-muted">
-          Tienes {eventosActivos.length} eventos activos y{' '}
-          {tareasPendientes.length} tareas pendientes.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-text-primary">
+            Hola, {planner?.nombre?.split(' ')[0] ?? 'Planner'}
+          </h1>
+          <p className="mt-1 text-sm capitalize text-text-secondary">{hoy}</p>
+          <p className="text-sm text-text-muted">
+            {eventosActivos.length > 0
+              ? `Tienes ${eventosActivos.length} eventos activos y ${tareasPendientes.length} tareas pendientes.`
+              : 'Crea tu primer evento para comenzar.'}
+          </p>
+        </div>
+        {/* Quick actions */}
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" nativeButton={false} render={<Link href="/clientes" />}>
+            <Users className="mr-1.5 h-4 w-4" />
+            Nuevo cliente
+          </Button>
+          <Button size="sm" nativeButton={false} render={<Link href="/eventos" />}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            Nuevo evento
+          </Button>
+        </div>
       </div>
 
       {/* ── KPI Cards — staggered entrance ────────────────────────── */}
@@ -160,14 +180,30 @@ export default async function DashboardPage() {
         <h2 className="mb-4 text-base font-semibold text-text-primary">
           Mis eventos activos
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {allEventos.map((evento) => {
-            const cliente = allClientes.find((c) => c.id === evento.clienteId)
-            return (
-              <EventoCard key={evento.id} evento={evento} cliente={cliente} />
-            )
-          })}
-        </div>
+        {allEventos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-warm-border py-16 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gold/10">
+              <CalendarHeart className="h-7 w-7 text-gold" />
+            </div>
+            <p className="font-semibold text-text-primary">Sin eventos todavía</p>
+            <p className="mt-1 max-w-xs text-sm text-text-muted">
+              Crea tu primer evento de boda para comenzar a gestionar clientes, presupuesto y proveedores.
+            </p>
+            <Button size="sm" className="mt-4" nativeButton={false} render={<Link href="/eventos" />}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Crear primer evento
+            </Button>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {allEventos.map((evento) => {
+              const cliente = allClientes.find((c) => c.id === evento.clienteId)
+              return (
+                <EventoCard key={evento.id} evento={evento} cliente={cliente} />
+              )
+            })}
+          </div>
+        )}
       </section>
 
       {/* ── Grid inferior ─────────────────────────────────────────── */}
@@ -179,33 +215,40 @@ export default async function DashboardPage() {
             Tareas pendientes
           </h2>
           <div className="overflow-hidden rounded-lg border border-warm-border bg-background">
-            <ul className="divide-y divide-warm-border">
-              {tareasPendientes.map((tarea) => {
-                const evento = allEventos.find((e) => e.id === tarea.eventoId)
-                const estilo = ESTADO_TAREA_STYLE[tarea.estado]
-                return (
-                  <li key={tarea.id} className="flex items-start gap-3 px-4 py-3">
-                    {/* Checkbox decorativo */}
-                    <div className="mt-0.5 h-4 w-4 shrink-0 rounded border border-warm-border bg-surface" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-text-primary">
-                        {tarea.titulo}
-                      </p>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-text-muted">
-                        <span className="truncate">{evento?.nombre}</span>
-                        <span>·</span>
-                        <span className={cn('font-medium', estilo.className)}>
-                          {estilo.label}
-                        </span>
+            {tareasPendientes.length === 0 ? (
+              <div className="flex flex-col items-center py-10 text-center">
+                <CheckSquare className="mb-2 h-8 w-8 text-success" />
+                <p className="text-sm font-medium text-text-primary">Todo al día</p>
+                <p className="mt-0.5 text-xs text-text-muted">Sin tareas pendientes por ahora.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-warm-border">
+                {tareasPendientes.map((tarea) => {
+                  const evento = allEventos.find((e) => e.id === tarea.eventoId)
+                  const estilo = ESTADO_TAREA_STYLE[tarea.estado]
+                  return (
+                    <li key={tarea.id} className="flex items-start gap-3 px-4 py-3">
+                      <div className="mt-0.5 h-4 w-4 shrink-0 rounded border border-warm-border bg-surface" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-text-primary">
+                          {tarea.titulo}
+                        </p>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-text-muted">
+                          <span className="truncate">{evento?.nombre}</span>
+                          <span>·</span>
+                          <span className={cn('font-medium', estilo.className)}>
+                            {estilo.label}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <span className="shrink-0 text-xs text-text-muted">
-                      {formatDateShort(tarea.fechaVencimiento)}
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
+                      <span className="shrink-0 text-xs text-text-muted">
+                        {formatDateShort(tarea.fechaVencimiento)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </div>
         </section>
 

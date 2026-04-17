@@ -17,6 +17,7 @@ import {
 import { createEvento } from '@/lib/api/eventos'
 import { getClientes } from '@/lib/api/clientes'
 import { getPaquetes } from '@/lib/api/paquetes'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { Cliente, Paquete, TipoEvento } from '@/types'
 
 const TIPOS_EVENTO: { value: TipoEvento; label: string }[] = [
@@ -66,7 +67,7 @@ export function NuevoEventoDialog() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!nombre.trim() || !clienteId || !fecha) {
-      alert('Por favor completa nombre, cliente y fecha.')
+      toastError('Completa los campos requeridos', 'Nombre, cliente y fecha son obligatorios.')
       return
     }
     setLoading(true)
@@ -85,10 +86,11 @@ export function NuevoEventoDialog() {
       })
       setOpen(false)
       resetForm()
+      toastSuccess('Evento creado', `${nombre} fue creado correctamente.`)
       router.refresh()
     } catch (err) {
       console.error('Error al crear evento:', err)
-      alert('Error al crear el evento. Intenta de nuevo.')
+      toastError('Error al crear el evento', 'Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

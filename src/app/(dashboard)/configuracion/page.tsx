@@ -21,7 +21,12 @@ import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { Planner, Paquete } from '@/types'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -122,7 +127,9 @@ function TabPerfil({ planner, onUpdate }: { planner: Planner | null; onUpdate: (
     try {
       const updated = await updatePlanner({ nombre, email, telefono, zonaHoraria })
       onUpdate(updated)
-      alert('Perfil guardado correctamente.')
+      toastSuccess('Perfil guardado', 'Tu información fue actualizada correctamente.')
+    } catch {
+      toastError('Error al guardar', 'Intenta de nuevo.')
     } finally {
       setSaving(false)
     }
@@ -211,7 +218,9 @@ function TabEmpresa({ planner, onUpdate }: { planner: Planner | null; onUpdate: 
     try {
       const updated = await updatePlanner({ empresa, moneda })
       onUpdate(updated)
-      alert('Empresa guardada correctamente.')
+      toastSuccess('Empresa guardada', 'Los datos de tu empresa fueron actualizados.')
+    } catch {
+      toastError('Error al guardar', 'Intenta de nuevo.')
     } finally {
       setSaving(false)
     }
@@ -429,6 +438,7 @@ function TabPaquetes({ initialPaquetes }: { initialPaquetes: Paquete[] }) {
   const [paquetes, setPaquetes] = useState(initialPaquetes)
   const [dialogOpen,     setDialogOpen]     = useState(false)
   const [paqueteEditing, setPaqueteEditing] = useState<Paquete | null>(null)
+  const [deleteId,       setDeleteId]       = useState<string | null>(null)
 
   const fmt = (n: number) =>
     new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n)
@@ -441,9 +451,10 @@ function TabPaquetes({ initialPaquetes }: { initialPaquetes: Paquete[] }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('¿Eliminar este paquete?')) return
     await deletePaquete(id)
     setPaquetes((prev) => prev.filter((x) => x.id !== id))
+    setDeleteId(null)
+    toastSuccess('Paquete eliminado', 'El paquete fue eliminado correctamente.')
   }
 
   function openNuevo() {
@@ -500,7 +511,7 @@ function TabPaquetes({ initialPaquetes }: { initialPaquetes: Paquete[] }) {
                   <Button size="icon-sm" variant="ghost" onClick={() => openEditar(p)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon-sm" variant="ghost" className="text-text-muted hover:text-danger" onClick={() => handleDelete(p.id)}>
+                  <Button size="icon-sm" variant="ghost" className="text-text-muted hover:text-danger" onClick={() => setDeleteId(p.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -529,6 +540,26 @@ function TabPaquetes({ initialPaquetes }: { initialPaquetes: Paquete[] }) {
         onClose={() => setDialogOpen(false)}
         onSaved={handleSaved}
       />
+
+      <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar paquete?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El paquete será eliminado permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-danger text-white hover:bg-danger/90"
+              onClick={() => deleteId && handleDelete(deleteId)}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -611,6 +642,7 @@ const ROL_COLOR: Record<Rol, string> = {
 function TabEquipo() {
   const [equipo,     setEquipo]     = useState<MiembroEquipo[]>(EQUIPO_INICIAL)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [deleteId,   setDeleteId]   = useState<string | null>(null)
 
   function toggleActivo(id: string) {
     setEquipo((prev) =>
@@ -620,6 +652,8 @@ function TabEquipo() {
 
   function handleDelete(id: string) {
     setEquipo((prev) => prev.filter((m) => m.id !== id))
+    setDeleteId(null)
+    toastSuccess('Miembro eliminado', 'El miembro fue removido del equipo.')
   }
 
   function handleInvite(email: string, rol: Rol) {
@@ -684,7 +718,7 @@ function TabEquipo() {
                   size="icon-sm"
                   variant="ghost"
                   className="text-text-muted hover:text-danger"
-                  onClick={() => handleDelete(m.id)}
+                  onClick={() => setDeleteId(m.id)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -695,6 +729,26 @@ function TabEquipo() {
       </Card>
 
       <DialogInvitar open={inviteOpen} onClose={() => setInviteOpen(false)} onInvite={handleInvite} />
+
+      <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar miembro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El miembro perderá acceso a la plataforma.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-danger text-white hover:bg-danger/90"
+              onClick={() => deleteId && handleDelete(deleteId)}
+            >
+              Eliminar miembro
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -771,7 +825,7 @@ function TabNotificaciones() {
         <Button
           size="sm"
           className="bg-brand text-gold hover:bg-brand/90"
-          onClick={() => alert('Preferencias guardadas localmente.')}
+          onClick={() => toastSuccess('Preferencias guardadas', 'Tus preferencias de notificación fueron actualizadas.')}
         >
           Guardar preferencias
         </Button>

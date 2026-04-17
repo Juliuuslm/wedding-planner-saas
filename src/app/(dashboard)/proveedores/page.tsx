@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Store } from 'lucide-react'
 import { getProveedores } from '@/lib/api/proveedores'
 import { ProveedorCard } from '@/components/proveedores/ProveedorCard'
 import { NuevoProveedorDialog } from '@/components/proveedores/NuevoProveedorDialog'
@@ -116,10 +116,15 @@ export default function ProveedoresPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-warm-border py-20 text-center">
-          <p className="font-medium text-text-primary">Sin resultados</p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-warm-border py-20 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <Store className="h-6 w-6 text-text-muted" />
+          </div>
+          <p className="font-medium text-text-primary">Sin proveedores</p>
           <p className="mt-1 text-sm text-text-muted">
-            Prueba con otro término o categoría
+            {busqueda || filtroCategoria !== 'todos'
+              ? 'Prueba con otro término o categoría'
+              : 'Agrega tu primer proveedor al catálogo'}
           </p>
         </div>
       )}

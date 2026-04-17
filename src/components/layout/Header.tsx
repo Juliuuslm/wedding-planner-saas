@@ -5,7 +5,6 @@ import { Menu, Bell, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -87,16 +86,10 @@ export function Header({ onOpenSidebar }: HeaderProps) {
         </Button>
       )}
 
-      {/* Notifications */}
-      <div className="relative">
-        <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
-          <span className="sr-only">Notificaciones</span>
-        </Button>
-        <Badge className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full p-0 text-[10px]">
-          2
-        </Badge>
-      </div>
+      {/* Notifications — placeholder, badge removed until real notifs */}
+      <Button variant="ghost" size="icon" aria-label="Notificaciones">
+        <Bell className="h-5 w-5" />
+      </Button>
 
       {/* Planner avatar */}
       <DropdownMenu>

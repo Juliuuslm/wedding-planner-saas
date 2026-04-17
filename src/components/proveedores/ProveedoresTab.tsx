@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ODPCard } from './ODPCard'
 import { createODP } from '@/lib/api/odp'
 import { cn } from '@/lib/utils'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { Evento, ODP, Proveedor } from '@/types'
 
 const fmt = new Intl.NumberFormat('es-MX', {
@@ -96,7 +97,7 @@ export function ProveedoresTab({ evento, odps, proveedores }: ProveedoresTabProp
   async function handleCreateODP(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedProveedor || !descripcion.trim() || !monto || !fecha) {
-      alert('Por favor completa todos los campos.')
+      toastError('Campos requeridos', 'Completa descripción, monto y fecha.')
       return
     }
     setLoading(true)
@@ -110,10 +111,11 @@ export function ProveedoresTab({ evento, odps, proveedores }: ProveedoresTabProp
         estado: 'pendiente',
       })
       setSelectedProveedor(null)
+      toastSuccess('ODP creada', `Orden de desempeño para ${selectedProveedor.nombre} creada.`)
       router.refresh()
     } catch (err) {
       console.error('Error al crear ODP:', err)
-      alert('Error al crear la orden de desempeño. Intenta de nuevo.')
+      toastError('Error al crear ODP', 'Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

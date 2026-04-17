@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { AssetCard, type Asset, type CategoriaAsset } from './AssetCard'
+import { toastInfo } from '@/lib/toast'
 import type { Evento } from '@/types'
 
 const MOCK_ASSETS: Asset[] = [
@@ -110,7 +111,7 @@ export function DisenoTab({ evento }: DisenoTabProps) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => alert('Subida de assets próximamente')}
+            onClick={() => toastInfo('Próximamente', 'La subida de assets estará disponible pronto.')}
           >
             <Upload className="mr-1.5 h-4 w-4" />
             Subir asset

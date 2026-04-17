@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { createCliente } from '@/lib/api/clientes'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { EstadoCliente } from '@/types'
 
 export function NuevoClienteDialog() {
@@ -41,7 +42,7 @@ export function NuevoClienteDialog() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!nombre.trim() || !apellido.trim() || !email.trim()) {
-      alert('Por favor completa nombre, apellido y correo.')
+      toastError('Campos requeridos', 'Nombre, apellido y correo son obligatorios.')
       return
     }
     setLoading(true)
@@ -49,10 +50,11 @@ export function NuevoClienteDialog() {
       await createCliente({ nombre, apellido, email, telefono, estado, notas: notas || undefined })
       setOpen(false)
       resetForm()
+      toastSuccess('Cliente creado', `${nombre} ${apellido} fue agregado al CRM.`)
       router.refresh()
     } catch (err) {
       console.error('Error al crear cliente:', err)
-      alert('Error al crear el cliente. Intenta de nuevo.')
+      toastError('Error al crear cliente', 'Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

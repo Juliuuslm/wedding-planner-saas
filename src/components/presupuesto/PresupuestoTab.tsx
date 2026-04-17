@@ -5,6 +5,7 @@ import { Download, ExternalLink, Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TablaPresupuesto } from './TablaPresupuesto'
+import { toastError, toastSuccess } from '@/lib/toast'
 import type { Evento, LineaPresupuesto } from '@/types'
 
 function fmt(n: number) {
@@ -85,7 +86,7 @@ export function PresupuestoTab({
           variant="outline"
           onClick={() => {
             if (lineas.length === 0) {
-              alert('No hay conceptos para exportar.')
+              toastError('Sin datos', 'No hay conceptos para exportar.')
               return
             }
             const headers = ['Concepto', 'Estimado', 'Real', 'Pagado', 'Estado']
@@ -104,6 +105,7 @@ export function PresupuestoTab({
             a.download = `presupuesto-${evento.id}.csv`
             a.click()
             URL.revokeObjectURL(url)
+            toastSuccess('Archivo descargado', `presupuesto-${evento.nombre}.csv`)
           }}
         >
           <Download className="mr-1.5 h-4 w-4" />

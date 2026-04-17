@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { updateCliente } from '@/lib/api/clientes'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { Cliente, EstadoCliente } from '@/types'
 
 interface EditarClienteDialogProps {
@@ -45,17 +46,18 @@ export function EditarClienteDialog({ cliente }: EditarClienteDialogProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!nombre.trim() || !apellido.trim() || !email.trim()) {
-      alert('Por favor completa nombre, apellido y correo.')
+      toastError('Completa los campos requeridos', 'Nombre, apellido y correo son obligatorios.')
       return
     }
     setLoading(true)
     try {
       await updateCliente(cliente.id, { nombre, apellido, email, telefono, estado, notas: notas || undefined })
       setOpen(false)
+      toastSuccess('Cliente actualizado', `${nombre} ${apellido} fue actualizado.`)
       router.refresh()
     } catch (err) {
       console.error('Error al actualizar cliente:', err)
-      alert('Error al actualizar el cliente. Intenta de nuevo.')
+      toastError('Error al actualizar', 'Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

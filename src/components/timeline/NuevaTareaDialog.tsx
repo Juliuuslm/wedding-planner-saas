@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { createTarea } from '@/lib/api/tareas'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { EstadoTarea } from '@/types'
 
 const FASES = ['Contratación', 'Diseño', 'Logística', 'Comunicación', 'Día del evento', 'Post-evento']
@@ -50,7 +51,7 @@ export function NuevaTareaDialog({ eventoId }: NuevaTareaDialogProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!titulo.trim() || !fechaVencimiento) {
-      alert('Por favor completa el título y la fecha límite.')
+      toastError('Campos requeridos', 'Título y fecha límite son obligatorios.')
       return
     }
     setLoading(true)
@@ -68,10 +69,11 @@ export function NuevaTareaDialog({ eventoId }: NuevaTareaDialogProps) {
       })
       setOpen(false)
       resetForm()
+      toastSuccess('Tarea creada', `"${titulo}" fue agregada al timeline.`)
       router.refresh()
     } catch (err) {
       console.error('Error al crear tarea:', err)
-      alert('Error al crear la tarea. Intenta de nuevo.')
+      toastError('Error al crear tarea', 'Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

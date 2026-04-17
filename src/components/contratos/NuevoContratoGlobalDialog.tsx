@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { createContrato } from '@/lib/api/contratos'
 import { getEventos } from '@/lib/api/eventos'
+import { toastSuccess, toastError } from '@/lib/toast'
 import type { Evento, TipoContrato } from '@/types'
 
 export function NuevoContratoGlobalDialog() {
@@ -46,7 +47,7 @@ export function NuevoContratoGlobalDialog() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!eventoId || !contraparte.trim() || !montoTotal) {
-      alert('Por favor completa evento, contraparte y monto total.')
+      toastError('Campos requeridos', 'Completa evento, contraparte y monto total.')
       return
     }
     setLoading(true)
@@ -62,10 +63,11 @@ export function NuevoContratoGlobalDialog() {
       })
       setOpen(false)
       resetForm()
+      toastSuccess('Contrato creado', 'El contrato fue creado en estado borrador.')
       router.refresh()
     } catch (err) {
       console.error('Error al crear contrato:', err)
-      alert('Error al crear el contrato. Intenta de nuevo.')
+      toastError('Error al crear contrato', 'Intenta de nuevo.')
     } finally {
       setLoading(false)
     }

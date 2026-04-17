@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { NuevoContratoGlobalDialog } from '@/components/contratos/NuevoContratoGlobalDialog'
+import { FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Contrato, Evento, EstadoContrato, TipoContrato } from '@/types'
 
@@ -210,10 +211,15 @@ export default function ContratosPage() {
           </Table>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-warm-border py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-warm-border py-16 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <FileText className="h-6 w-6 text-text-muted" />
+          </div>
           <p className="font-medium text-text-primary">Sin contratos</p>
           <p className="mt-1 text-sm text-text-muted">
-            Ajusta los filtros o crea un nuevo contrato
+            {filtroTipo !== 'todos' || filtroEstado !== 'todos'
+              ? 'Ajusta los filtros para ver más resultados'
+              : 'Crea tu primer contrato asociado a un evento'}
           </p>
         </div>
       )}
