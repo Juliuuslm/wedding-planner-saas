@@ -30,6 +30,7 @@ import {
 import { createEvento } from '@/lib/api/eventos'
 import { getClientes, createCliente } from '@/lib/api/clientes'
 import { getPaquetes } from '@/lib/api/paquetes'
+import { ApiError } from '@/lib/api/client'
 import { toastSuccess, toastError } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import type { Cliente, Paquete, TipoEvento, EstadoEvento } from '@/types'
@@ -150,10 +151,10 @@ export function NuevoEventoDialog() {
       let clienteId = selectedClienteId
       if (clienteMode === 'nuevo') {
         const nuevoCliente = await createCliente({
-          nombre: clienteNombre,
-          apellido: clienteApellido,
-          email: clienteEmail,
-          telefono: clienteTelefono,
+          nombre: clienteNombre.trim(),
+          apellido: clienteApellido.trim(),
+          email: clienteEmail.trim(),
+          telefono: clienteTelefono.trim(),
           estado: estado === 'lead' ? 'prospecto' : 'activo',
         })
         clienteId = nuevoCliente.id
@@ -161,11 +162,11 @@ export function NuevoEventoDialog() {
 
       // 2. Crear evento
       const nuevoEvento = await createEvento({
-        nombre,
+        nombre: nombre.trim(),
         tipo,
         fecha,
         clienteId,
-        venue: venue || undefined,
+        venue: venue.trim() || undefined,
         numeroInvitados: numeroInvitados ? Number(numeroInvitados) : undefined,
         paqueteId: paqueteId || undefined,
         estado,
@@ -179,8 +180,11 @@ export function NuevoEventoDialog() {
       router.push(`/eventos/${nuevoEvento.id}`)
       router.refresh()
     } catch (err) {
-      console.error('Error al crear evento:', err)
-      toastError('Error al crear evento', 'Verifica los datos e intenta de nuevo.')
+      console.error('Error al crear evento:', err, err instanceof ApiError ? err.body : null)
+      const detail = err instanceof ApiError
+        ? (err.detail ?? `${err.status} ${err.statusText}`)
+        : 'Verifica los datos e intenta de nuevo.'
+      toastError('Error al crear evento', detail)
     } finally {
       setLoading(false)
     }

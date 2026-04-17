@@ -9,12 +9,21 @@ const BASE_URL =
 // ─── Error ──────────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
+  public detail: string | null
+
   constructor(
     public status: number,
     public statusText: string,
     public body: unknown,
   ) {
-    super(`API ${status}: ${statusText}`)
+    // Intenta sacar el mensaje del body {error: {code, message}}
+    let detail: string | null = null
+    if (body && typeof body === 'object' && 'error' in body) {
+      const err = (body as { error?: { message?: string } }).error
+      if (err?.message) detail = err.message
+    }
+    super(detail ? `API ${status}: ${detail}` : `API ${status}: ${statusText}`)
+    this.detail = detail
     this.name = 'ApiError'
   }
 }
