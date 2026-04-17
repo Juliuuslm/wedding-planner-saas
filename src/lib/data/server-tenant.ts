@@ -1,6 +1,6 @@
 import 'server-only'
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { safeAuth } from '@/lib/safe-auth'
 import type { TenantContext } from '@/lib/db-tenant'
 
 /**
@@ -8,7 +8,7 @@ import type { TenantContext } from '@/lib/db-tenant'
  * Si no hay sesión válida, redirige a /login.
  */
 export async function serverTenant(): Promise<TenantContext> {
-  const session = await auth()
+  const session = await safeAuth()
   const plannerId = session?.user?.plannerId
   if (!session?.user || !plannerId) {
     redirect('/login')

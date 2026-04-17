@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ZodError, type ZodType } from 'zod'
-import { auth } from '@/lib/auth'
+import { safeAuth } from '@/lib/safe-auth'
 import { withTenant, type TxClient, type TenantContext } from '@/lib/db-tenant'
 
 // ── Error tipos ───────────────────────────────────────────────────────────
@@ -51,7 +51,7 @@ export function authenticated<
     { params }: { params: Promise<TParams> | TParams } = { params: {} as TParams },
   ) => {
     try {
-      const session = await auth()
+      const session = await safeAuth()
       if (!session?.user) throw unauthorized()
 
       const plannerId = session.user.plannerId

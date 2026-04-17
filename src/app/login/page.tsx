@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { auth, signIn } from '@/lib/auth'
+import { signIn } from '@/lib/auth'
+import { safeAuth } from '@/lib/safe-auth'
 import { AuthError } from 'next-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export default async function LoginPage({ searchParams }: Props) {
-  const session = await auth()
+  const session = await safeAuth()
   if (session?.user) redirect('/dashboard')
 
   const params = await searchParams
