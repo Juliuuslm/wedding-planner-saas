@@ -182,147 +182,129 @@
 
 ---
 
-## Fase 2 — MVP Web
+## Fase 2 — MVP Web (Next.js full-stack + Prisma + Auth.js + RLS)
 
-**Objetivo:** Conectar el prototipo con un backend real y desplegarlo en producción.  
-**Resultado:** Producto funcional que un planner real puede usar para gestionar sus bodas.
+**Objetivo:** Conectar el prototipo con datos reales, auth y multitenant con RLS.
+**Resultado:** Plataforma funcional que un planner real puede usar; primer cliente en producción.
 
----
-
-### Paso 1 — Setup del backend Rust
-
-- [ ] Inicializar proyecto Rust con Axum y Tokio
-- [ ] Configurar estructura de carpetas (handlers, models, services, middleware, config)
-- [ ] Setup de variables de entorno con `dotenv`
-- [ ] Configurar CORS para comunicación con el frontend Next.js
-- [ ] Dockerfile optimizado para Fly.io
-- [ ] CI/CD básico con GitHub Actions (build + test en cada push)
-- [ ] Health check endpoint
+> **Nota histórica:** Originalmente Fase 2 iba a usar un backend separado en Rust+Axum+SQLx+Clerk. Esa decisión se revirtió: Tauri no requiere backend Rust (shell nativo independiente del API server), Clerk cuesta, iterar en dos stacks ralentizó el descubrimiento de producto. El código Rust se preservó en la rama `archive/rust-backend` como referencia. Ver [plan de migración](/.claude-stkr/plans/okey-dame-un-plan-cheerful-pond.md).
 
 ---
 
-### Paso 2 — Base de datos
+### M1 — Fundamentos Prisma + Auth.js
 
-- [ ] Diseño del esquema completo en PostgreSQL
-  - Tablas: planners, team_members, clients, events, vendors, vendor_categories, contracts, budget_items, payments, tasks, odp, assets, notifications
-- [ ] Configurar SQLx con sistema de migraciones
-- [ ] Conectar a Supabase (PostgreSQL gestionado)
-- [ ] Seeds de datos para desarrollo
-- [ ] Índices para queries frecuentes
+- [x] Portar schema SQL (11 tablas) a `prisma/schema.prisma`
+- [x] `prisma.config.ts` con datasource url (Prisma 7)
+- [x] `src/lib/prisma.ts` singleton con `@prisma/adapter-pg`
+- [x] `src/lib/auth.ts` con NextAuth v5 + PrismaAdapter
+- [x] Providers: Credentials (bcrypt) + Resend (magic-link)
+- [x] `prisma/seed.ts` portado desde `src/data/mock.ts`
+- [x] Scripts `db:up`, `db:migrate`, `db:seed`, `db:studio` en `package.json`
 
----
+### M2 — RLS + tenant plumbing
 
-### Paso 3 — Autenticación multi-tenant
+- [x] Migración `enable_rls`: habilitar RLS en 10 tablas
+- [x] Funciones helper `app_current_planner/scope/role`
+- [x] Policies por defecto: `planner_id = app_current_planner()`
+- [x] Policies extra para portales cliente/proveedor (role + scope)
+- [x] Rol `app_user` (sin BYPASSRLS) con permisos CRUD
+- [x] Helper `withTenant(ctx, fn)` en `src/lib/db-tenant.ts`
+- [x] Wrapper `authenticated(handler)` en `src/lib/api-handler.ts`
 
-- [ ] Integrar Clerk en frontend Next.js
-- [ ] Middleware en Axum para validar JWTs de Clerk
-- [ ] Definir roles: `planner`, `team_member`, `vendor`, `client`
-- [ ] Row Level Security en PostgreSQL por planner (aislamiento total de datos)
-- [ ] Flujo de onboarding para nuevo planner
-- [ ] Invitación de equipo por email
-- [ ] Invitación de proveedor y cliente por email
+### M3 — Route Handlers Next.js
 
----
+- [x] 23 archivos `route.ts` en `src/app/api/**` (25 endpoints)
+- [x] Validadores Zod compartidos en `src/lib/validators.ts`
+- [x] Todos los endpoints envueltos con `authenticated` + `withTenant`
+- [x] Defensa en profundidad: `where: { plannerId }` en cada query
 
-### Paso 4 — CRM funcional
+### M4 — Conectar frontend
 
-- [ ] API REST: CRUD completo de clientes
-- [ ] API REST: CRUD completo de eventos
-- [ ] Búsqueda y filtros reales en base de datos
-- [ ] Conectar frontend CRM con API
-- [ ] Validaciones de formularios con Zod
-- [ ] Paginación en listas
+- [x] `src/lib/api/client.ts` apunta a `/api` (same-origin)
+- [x] Fetch con `credentials: 'include'` para cookie Auth.js
 
----
+### M5 — Must-have para MVP público
 
-### Paso 5 — Presupuesto funcional
-
-- [ ] API REST: CRUD de categorías y líneas de presupuesto
-- [ ] Cálculos de totales en el backend
-- [ ] Persistencia de ediciones en tiempo real (debounce + autosave)
-- [ ] Exportación real a Excel con SheetJS en el frontend
-- [ ] Historial de cambios del presupuesto
-
----
-
-### Paso 6 — Timeline funcional
-
-- [ ] API REST: CRUD de tareas con fechas y asignaciones
-- [ ] Drag & drop que persiste en el backend
-- [ ] Cálculo automático de fechas hacia atrás desde el evento
-- [ ] Primeros jobs automáticos con apalis: recordatorio de tarea próxima a vencer
+- [ ] **Auth & tenancy:** signup planner, login magic-link, logout, invitación cliente/proveedor por email
+- [ ] **CRM clientes:** CRUD con estados, búsqueda, filtros, validación Zod + react-hook-form
+- [ ] **Eventos:** CRUD con tabs, cálculo de progreso desde tareas, calendario mensual
+- [ ] **Presupuesto:** tabla editable (TanStack), autosave debounce, barra de pagos
+- [ ] **Timeline:** CRUD tareas, vista Gantt, drag&drop persistente, filtros
+- [ ] **Proveedores:** CRUD 14 categorías, asignación a eventos, ODPs
+- [ ] **Contratos:** CRUD, estados, PDF con React PDF
+- [ ] **Portal cliente:** progreso con hitos, pagos (read-only), aprobación de diseños
+- [ ] **Portal proveedor:** lista ODPs, detalle con acciones confirmar/solicitar cambio
+- [ ] **UX foundation:** skeletons, empty states, error boundaries, focus rings, reduced-motion, responsive, toasts, confirmación destructiva
+- [ ] **Configuración:** perfil planner, CRUD paquetes
+- [ ] **Deploy:** Vercel + Neon/Supabase + dominio
 
 ---
 
-### Paso 7 — Módulo de proveedores funcional
+## Fase 3 — Nice-to-have (post-MVP)
 
-- [ ] API REST: CRUD de proveedores y catálogo
-- [ ] Asignación de proveedores a eventos
-- [ ] CRUD de ODPs
-- [ ] Portal del proveedor con autenticación real via Clerk
-- [ ] Notificación al proveedor cuando recibe una ODP
+### 3a — Productividad
 
----
+- [ ] Exportar presupuesto a Excel (SheetJS)
+- [ ] Historial de versiones de contratos
+- [ ] Notificaciones in-app
+- [ ] Email transaccional en cambios de estado (Resend)
+- [ ] Job queue (Inngest o pg-boss): recordatorios, alertas, resumen semanal
+- [ ] Búsqueda global ⌘K (cmdk)
+- [ ] Atajos de teclado
+- [ ] Dashboard con KPIs reales
+- [ ] Firma digital en contrato (canvas)
 
-### Paso 8 — Contratos funcionales
+### 3b — Colaboración
 
-- [ ] Templates de contrato con auto-completado real de datos del evento
-- [ ] Generación de PDF real con React PDF
-- [ ] Envío de contrato por email con Resend
-- [ ] Almacenamiento del PDF firmado en Cloudflare R2
-- [ ] Estado del contrato actualizado tras firma
+- [ ] Gestión equipo con roles (owner/editor/viewer)
+- [ ] Asignación de tareas a miembros reales (no hardcoded)
+- [ ] Comentarios en tareas
+- [ ] Log de actividad por evento
+- [ ] Mensajes real-time en portal cliente (SSE o Pusher)
 
----
+### 3c — Diseño & assets
 
-### Paso 9 — Portal del cliente funcional
+- [ ] Upload a Cloudflare R2 o Vercel Blob
+- [ ] Galería por evento con tags
+- [ ] Integración Canva Connect (OAuth + embed)
 
-- [ ] Portal del cliente con autenticación real via Clerk (invite por email)
-- [ ] Progreso del evento en tiempo real con WebSockets (Axum + tokio-tungstenite)
-- [ ] Vista controlada: sin datos sensibles del presupuesto interno
-- [ ] Sección de aprobaciones con respuesta del cliente guardada en DB
+### 3d — Pagos & automatización
 
----
+- [ ] Stripe / Mercado Pago para anticipos
+- [ ] Link de pago por contrato
+- [ ] Webhooks → actualiza estado pago en `budget_items`
+- [ ] Recordatorios por email + WhatsApp (Twilio o WhatsApp Business API)
+- [ ] Factura PDF automática
 
-### Paso 10 — Automatizaciones base
+### 3e — Directorio público
 
-- [ ] Configurar apalis con backend en PostgreSQL
-- [ ] Job: recordatorio de pago próximo (email + notificación en app)
-- [ ] Job: alerta cuando una tarea está atrasada
-- [ ] Job: email de bienvenida al cliente al crear su evento
-- [ ] Job: resumen semanal al planner con estado de todos sus eventos
-- [ ] Dashboard de jobs en panel de administración
+- [ ] Página pública `/planners/[slug]` con portfolio
+- [ ] SEO (metadata, sitemap, OG tags)
+- [ ] Formulario de contacto → lead
 
----
+### 3f — Internacionalización
 
-### Paso 11 — Integración Canva Connect
-
-- [ ] Solicitar acceso al programa de partners de Canva
-- [ ] Implementar OAuth flow de Canva en el backend Rust
-- [ ] Embeber editor de Canva en el módulo de diseño del evento
-- [ ] Guardar referencia de assets de Canva vinculados al evento en PostgreSQL
-- [ ] Mostrar thumbnail de diseños de Canva en el presupuesto como referencia visual
-
----
-
-### Paso 12 — Deploy y estabilización
-
-- [ ] Deploy del frontend en Vercel con dominio personalizado
-- [ ] Deploy del backend Rust en Fly.io
-- [ ] Variables de entorno de producción configuradas
-- [ ] Monitoreo básico con logs en Fly.io
-- [ ] Configurar backups automáticos en Supabase
-- [ ] Pruebas end-to-end antes de abrir a primeros usuarios
-- [ ] Onboarding del primer planner real en producción
+- [ ] i18n con next-intl (es-MX, es-CO, es-AR, pt-BR)
+- [ ] Formato moneda/fecha localizado
+- [ ] Templates para eventos corporativos / quinceañeras
 
 ---
 
-## Fases futuras
+## Fase 4 — Aplicación de escritorio
 
-| Fase | Descripción |
-|---|---|
-| **Fase 3 — Producto completo web** | Automatizaciones avanzadas, módulo de proveedores completo, WhatsApp Business API, pasarelas de pago locales LATAM, templates avanzados de contrato |
-| **Fase 4 — Aplicación de escritorio** | Empaquetado con Tauri (Rust). Mismo frontend React, lógica Rust compartida. Funcionalidad offline básica. Distribución macOS, Windows, Linux |
-| **Fase 5 — Expansión** | Soporte para eventos corporativos, internacionalización a otros mercados LATAM, módulo de marca personal y contenido UGC, directorio público de planners |
+- [ ] Empaquetar con Tauri (`src-tauri/`), mismo frontend
+- [ ] Distribución macOS / Windows / Linux
+- [ ] Modo offline parcial (cache read-only)
+- [ ] Notificaciones OS nativas
+
+---
+
+## Fase 5 — Expansión
+
+- [ ] Soporte eventos corporativos (no solo bodas)
+- [ ] Módulo de marca personal + contenido UGC
+- [ ] Directorio público de planners
+- [ ] Marketplace de proveedores cross-planner
 
 ---
 

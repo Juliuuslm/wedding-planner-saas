@@ -1,89 +1,100 @@
-# Despliegue en Railway
+# Despliegue
 
-Plataforma full-stack: Next.js frontend + Rust/Axum backend + PostgreSQL.
+Plataforma full-stack Next.js (UI + API en el mismo proceso). Dos servicios en producción:
 
-## Arquitectura de servicios
+1. **App Next.js** (Vercel o Railway) — frontend + Route Handlers.
+2. **Postgres** (Neon / Supabase / Railway Postgres) — base de datos.
 
-En el proyecto Railway necesitas 3 servicios:
+> Railway con backend Rust separado fue la arquitectura anterior. Quedó archivada en la rama `archive/rust-backend`. Este documento refleja la arquitectura actual.
 
-1. **Postgres** (plugin oficial de Railway)
-2. **backend** (Rust/Axum) — root directory `/backend`
-3. **frontend** (Next.js) — root directory `/`
+---
 
-Railway detecta el `Dockerfile` automáticamente en cada servicio.
+## Opción A — Vercel + Neon (recomendada)
 
-## Paso 1 — Crear proyecto
+### Paso 1 — Crear DB en Neon
+
+1. https://neon.tech → New project → Región LATAM (ej. `aws-us-east-2`).
+2. Copiar **pooled connection string** → será `DATABASE_URL`.
+3. Copiar **direct connection string** → será `DIRECT_URL` (usado por `prisma migrate deploy`).
+4. Neon usa pooler transaction-mode, compatible con `SET LOCAL` usado por RLS.
+
+### Paso 2 — App en Vercel
+
+1. Import Project desde GitHub.
+2. Framework preset: Next.js (auto).
+3. Environment Variables:
+   - `DATABASE_URL` → pooled de Neon
+   - `DIRECT_URL` → direct de Neon
+   - `AUTH_SECRET` → `openssl rand -base64 32`
+   - `AUTH_URL` → URL pública (ej. `https://weddingsaas.vercel.app`)
+   - `RESEND_API_KEY` → de https://resend.com
+   - `AUTH_EMAIL_FROM` → email verificado en Resend
+4. Build command (auto): `prisma generate && next build`. El `postinstall` corre `prisma generate`.
+5. Deploy.
+
+### Paso 3 — Migrar + seed
+
+Desde tu máquina con `.env` apuntando a Neon:
 
 ```bash
-# Fork o empuja este repo a GitHub
-# En Railway: New Project → Deploy from GitHub → selecciona el repo
+pnpm prisma migrate deploy
+pnpm db:seed   # opcional: solo si quieres datos demo en prod
 ```
 
-## Paso 2 — Postgres plugin
+---
 
-En el proyecto Railway: `+ New` → `Database` → `Add PostgreSQL`.
-Railway crea automáticamente la variable `DATABASE_URL` accesible a los otros servicios vía reference.
+## Opción B — Railway (monolito)
 
-## Paso 3 — Servicio backend
+Un solo servicio con el `Dockerfile` raíz + Postgres plugin.
 
-1. `+ New` → `GitHub Repo` → mismo repo
-2. Settings → Source → **Root Directory**: `/backend`
-3. Variables (Service Variables):
-   - `DATABASE_URL` → reference a `${{Postgres.DATABASE_URL}}`
-   - `PORT` → Railway asigna automáticamente (no se toca)
-   - `CORS_ORIGIN` → URL pública del frontend (ej: `https://frontend-production-xxx.up.railway.app`)
-   - `RUST_LOG` → `info,weddingsaas_backend=debug`
-4. Settings → Networking → **Generate Domain** para obtener URL pública.
-5. El servicio Rust corre migrations automáticamente al arrancar (via `sqlx::migrate!`). El seed data se aplica también, así que el primer deploy ya tiene datos para demo.
+1. Railway: `+ New Project` → `Deploy from GitHub`.
+2. `+ New` → `Database` → `Add PostgreSQL`. Copia `DATABASE_URL` (Railway lo genera).
+3. Service settings → Variables:
+   - `DATABASE_URL` → reference `${{Postgres.DATABASE_URL}}`
+   - `DIRECT_URL` → misma (Railway no tiene pooler)
+   - `AUTH_SECRET`, `AUTH_URL`, `RESEND_API_KEY`, `AUTH_EMAIL_FROM` → manual
+4. Networking → Generate Domain.
+5. El `Dockerfile` hace `prisma generate && next build`. Migraciones se aplican con un hook post-deploy o manual:
+   ```bash
+   railway run pnpm prisma migrate deploy
+   ```
 
-Healthcheck: `GET /api/health` devuelve `{"status":"ok"}`.
+---
 
-## Paso 4 — Servicio frontend
+## Verificación post-deploy
 
-1. `+ New` → `GitHub Repo` → mismo repo
-2. Settings → Source → **Root Directory**: `/` (raíz)
-3. Settings → Build → **Build Args** (importante, se bakean en el bundle cliente):
-   - `NEXT_PUBLIC_API_URL` → URL del backend + `/api` (ej: `https://backend-production-xxx.up.railway.app/api`)
-   - `NEXT_PUBLIC_USE_MOCK` → `false`
-4. Variables runtime (opcional, ya están en Dockerfile):
-   - `HOSTNAME=0.0.0.0` (ya seteado en Dockerfile)
-   - `NODE_ENV=production` (ya seteado)
-5. Settings → Networking → **Generate Domain** para URL pública.
+- App levantada: abrir URL pública → landing.
+- Login: magic-link a tu email → entrar a `/dashboard`.
+- API health: `curl https://<app>/api/planner/me` con cookie → devuelve planner JSON.
+- DB: debería tener al menos el planner del seed si corriste `db:seed`.
 
-Una vez que el frontend tenga URL, copiala a `CORS_ORIGIN` del backend y redeploya el backend.
-
-## Paso 5 — Verificar
-
-- Frontend: abre URL pública → ver dashboard con datos del seed.
-- Backend: `curl https://backend.../api/health` → `{"status":"ok"}`
-- DB: deberían aparecer 3 eventos, 8 proveedores, 3 clientes, 15 líneas presupuesto, 13 tareas, 6 contratos, 5 ODPs.
+---
 
 ## Troubleshooting
 
-**CORS error en browser**: asegura que `CORS_ORIGIN` del backend coincide exactamente con el host del frontend. Backend acepta `Any` origin por default en el código actual (MVP), pero si se endurece, debe tener la URL exacta.
+- **"DATABASE_URL is not set"** en build: agrega las variables de entorno en el proyecto (Vercel/Railway).
+- **Auth.js error AdapterError**: verifica que `DATABASE_URL` pueda conectar y que las migraciones Prisma se hayan aplicado (la tabla `users` debe existir).
+- **Magic-link no llega**: verifica `RESEND_API_KEY` válido y dominio de email verificado en Resend. El email `AUTH_EMAIL_FROM` debe estar en un dominio verificado.
+- **RLS bypasea datos**: si conectas con un rol con `BYPASSRLS` (ej. superuser `postgres`), RLS se ignora. Usa el rol `app_user` creado por la migración `enable_rls` en producción.
+- **`SET LOCAL` no funciona con PgBouncer session-mode**: usa transaction-mode (Neon default, Supabase pooler).
 
-**Frontend muestra "Failed to fetch"**: build args `NEXT_PUBLIC_API_URL` no seteados al momento de build. Revisa Settings → Build → Build Args. Redeploy frontend tras cambiar.
-
-**Migrations fallan**: backend logs dirán "Failed to apply migrations". Revisa `DATABASE_URL`. Si la DB está vacía pero el backend ya corrió, las migrations idempotentes se aplican solas en el siguiente restart.
-
-**Auth middleware**: actualmente hardcodeado al planner seed `a0000000-...`. Para multi-tenant en producción, integrar Clerk (TODO marcado en `backend/src/middleware/auth.rs`).
+---
 
 ## Desarrollo local
 
 ```bash
-# DB local via Docker
-make dev-db
-
-# Backend
-make dev-backend
-
-# Frontend (otra terminal)
-make dev-frontend
-
-# O todo a la vez
-make dev
+pnpm db:up        # docker compose up -d (Postgres local)
+pnpm db:migrate   # aplica migraciones pending
+pnpm db:seed      # pobla con datos de mock
+pnpm dev          # levanta Next en :3000
 ```
 
-Variables locales:
-- Frontend: `.env.local` ya tiene `NEXT_PUBLIC_API_URL=http://localhost:8080/api` y `NEXT_PUBLIC_USE_MOCK=false`.
-- Backend: `backend/.env` ya tiene `DATABASE_URL=postgres://postgres:postgres@localhost:5432/weddingsaas`.
+Variables locales en `.env` (git-ignorado). `.env.example` tiene plantilla.
+
+Reset total (destruye DB dev):
+
+```bash
+pnpm db:reset     # equivalente docker compose down -v && up
+pnpm db:migrate
+pnpm db:seed
+```

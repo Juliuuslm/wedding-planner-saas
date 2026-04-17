@@ -73,28 +73,27 @@ Acceso limitado y controlado a un portal donde pueden ver el progreso de su even
 ### Backend API
 | Tecnología | Uso |
 |---|---|
-| **Rust** | Lenguaje del backend |
-| **Axum** | Framework web (sobre Tokio, async nativo) |
-| **Tokio** | Runtime async de Rust |
-| **tokio-tungstenite** | WebSockets nativos para tiempo real |
+| **Next.js Route Handlers** | API REST interno en `src/app/api/**/route.ts`. Mismo proceso que el frontend, cero latencia de red interna. |
+| **Zod** | Validación de input en endpoints y formularios |
 
 ### Base de datos
 | Tecnología | Uso |
 |---|---|
-| **PostgreSQL** | Base de datos relacional principal |
-| **SQLx** | ORM async con verificación de queries en tiempo de compilación |
-| **Supabase** | PostgreSQL gestionado en la nube con dashboard visual |
+| **PostgreSQL 16** | Base de datos relacional principal |
+| **Prisma 7** | ORM type-safe con migraciones declarativas y cliente generado (`@prisma/client`). Usa `@prisma/adapter-pg` para conectar. |
+| **Neon / Supabase** | PostgreSQL gestionado en producción (Neon recomendado por su pooler serverless). |
+| **Row Level Security (RLS)** | Aislamiento multitenant en la base de datos. Cada request setea `SET LOCAL app.current_planner` dentro de una transacción; las policies filtran rows por tenant. Defensa en profundidad con `where: { plannerId }` en Prisma. |
 
 ### Automatizaciones y Jobs
 | Tecnología | Uso |
 |---|---|
-| **apalis** | Cola de trabajos en Rust con backend en PostgreSQL (sin Redis necesario en MVP) |
+| **Inngest / pg-boss** *(post-MVP)* | Cola de trabajos. Inngest (SaaS, free tier generoso) o pg-boss (self-hosted sobre Postgres). Se agrega en Fase 3. |
 
 ### Autenticación y Acceso
 | Tecnología | Uso |
 |---|---|
-| **Clerk** | Autenticación multi-tenant, portales de organización, invitaciones de equipo |
-| **JWT (validado en Rust)** | El backend Axum valida los tokens emitidos por Clerk |
+| **Auth.js v5 (NextAuth)** | Auth propia, self-hosted, gratis. Providers: Credentials (bcrypt) y Resend (magic-link por email). Session JWT firmada en servidor, incluye `role` y `scopeId` para portales cliente/proveedor. |
+| **@auth/prisma-adapter** | Persistencia de sesiones y cuentas en Postgres. |
 
 ### Almacenamiento y Comunicaciones
 | Tecnología | Uso |
@@ -111,46 +110,45 @@ Acceso limitado y controlado a un portal donde pueden ver el progreso de su even
 ### Infraestructura y Despliegue
 | Tecnología | Uso |
 |---|---|
-| **Vercel** | Hosting del frontend Next.js, deploys automáticos |
-| **Fly.io** | Hosting del backend Rust (binarios pequeños y eficientes) |
+| **Vercel** | Hosting de la app completa (frontend + Route Handlers) con deploys automáticos en cada push |
+| **Neon / Supabase** | Postgres gestionado. Un único servicio en Railway alternativa si se prefiere self-host. |
 
-### Fase 2 — Aplicación de escritorio
+### Fase 4 — Aplicación de escritorio
 | Tecnología | Uso |
 |---|---|
-| **Tauri (Rust)** | Wrapper desktop nativo que embebe el mismo frontend React. Comparte código Rust con el backend |
+| **Tauri (Rust)** | Wrapper desktop nativo que embebe el mismo frontend React. El shell Rust (`src-tauri/`) es independiente del API (que sigue siendo Next.js). La app de escritorio consume el API por HTTP igual que el web. |
 
 ---
 
 ### Justificación de decisiones clave del stack
 
-**¿Por qué Rust en el backend y no Node.js?**
-Rust fue elegido pensando en la fase desktop. Cuando el producto escale a aplicación de escritorio con Tauri, los tipos, la lógica de negocio y los módulos del backend en Rust pueden compartirse directamente con la capa nativa de Tauri. Con Node.js esa continuidad no existe. Además, los binarios de Rust en Fly.io consumen significativamente menos memoria y CPU que un servidor Node.js equivalente, reduciendo costos de infraestructura a escala.
+**¿Por qué Next.js full-stack y no un backend separado?**
+El MVP no tiene escala que justifique duplicar lenguajes. Con Route Handlers el mismo repo maneja UI y API: un solo deploy, un solo runtime, tipos compartidos vía Prisma. La decisión previa de usar Rust+Axum se revirtió porque: (a) Tauri no requiere backend Rust — el shell nativo es independiente del API server, (b) el ecosistema wedding (Stripe LATAM, Resend, React PDF, webhooks) está más maduro en Node/TS, (c) iterar en dos stacks ralentiza el descubrimiento de producto.
 
-**¿Por qué SQLx y no un ORM más abstracto?**
-SQLx verifica cada query SQL contra la base de datos en tiempo de compilación. Si un query es incorrecto, falla el build, no el runtime en producción. Para una plataforma con datos relacionales complejos (clientes → eventos → proveedores → contratos → pagos) esto elimina una categoría entera de bugs.
+**¿Por qué Prisma y no una librería más baja?**
+Prisma genera un cliente type-safe desde el schema. Los tipos del dominio fluyen al frontend sin duplicación. Las migraciones son declarativas y reproducibles. Prisma 7 usa driver adapters (`@prisma/adapter-pg`), lo que permite usar connection poolers como el de Neon de forma directa.
 
-**¿Por qué apalis y no Redis + BullMQ?**
-apalis corre sobre PostgreSQL como backend de colas, eliminando la necesidad de un servicio Redis separado en el MVP. Esto simplifica la infraestructura sin sacrificar funcionalidad. Redis se puede agregar más adelante si la escala lo requiere.
+**¿Por qué Auth.js y no Clerk?**
+Clerk cobra por MAU. Auth.js v5 es gratis, self-hosted, extensible y cubre los mismos casos: credentials, magic-link, OAuth social. La sesión JWT se firma en servidor y lleva `role` + `scopeId` para los portales cliente/proveedor.
 
-**¿Por qué Next.js si el backend es Rust separado?**
-Next.js no se usa por sus API Routes (esas las maneja Rust/Axum). Se usa por SSR en las páginas de marketing y landing (crítico para SEO y posicionamiento), por el sistema de routing del app, y porque es el frontend más compatible con Tauri para la fase desktop.
+**¿Por qué RLS en Postgres y no solo filtros app-side?**
+RLS proporciona una red de seguridad a nivel base de datos: si un bug en código app olvida filtrar por tenant, la DB rechaza la query. No es sustituto del filtro app-side sino complemento. El patrón `SET LOCAL app.current_planner` dentro de transacciones evita estado compartido entre requests.
 
 ---
 
 ### Puntos fuertes del stack
 
-- Continuidad Rust entre backend web y desktop Tauri: sin reescrituras en la transición.
-- TypeScript en frontend + Rust en backend = máxima seguridad de tipos posible en el estado del arte actual.
-- SQLx detecta errores de base de datos en build time, no en producción.
-- Sin Redis en el MVP simplifica la infraestructura sin perder funcionalidad.
-- WebSockets nativos en Axum son más eficientes que Socket.io sobre Node.
-- Binarios Rust en Fly.io: menor costo de servidor a escala que Node.js equivalente.
+- Un solo lenguaje (TS) entre UI y API: tipos compartidos, menos context-switching.
+- Prisma genera tipos del schema → sin duplicar entre DB y frontend.
+- RLS en Postgres como defensa en profundidad para multitenancy.
+- Un solo deploy en Vercel simplifica CI/CD y observabilidad.
+- Ecosistema Node maduro para integraciones del dominio (Resend, Stripe, WhatsApp API, PDF).
 
 ### Debilidades y riesgos del stack
 
-- Velocidad de desarrollo inicial más lenta que con Node.js en el backend.
-- Ecosistema de librerías Rust para web más pequeño que el de Node.js (aunque las existentes son de alta calidad).
-- Desarrolladores con experiencia en Axum son menos comunes y más costosos.
+- Prisma 7 es reciente; algunos patrones aún evolucionan (driver adapters, config file).
+- Auth.js v5 está en beta (v5.0.0-beta.31 al momento de migración); puede requerir revisitar API.
+- RLS añade complejidad operativa: los tests de aislamiento deben correr con rol `app_user` (sin BYPASSRLS).
 - FullCalendar requiere licencia commercial para SaaS (~$799/año).
 - Canva Connect requiere aprobación de partner de Canva para producción (proceso de semanas).
 
