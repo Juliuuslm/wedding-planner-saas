@@ -1,10 +1,10 @@
 // ─── API Client ─────────────────────────────────────────────────────────────
-// Typed fetch wrapper for the backend API.
-// During Phase 1 (prototype), all modules use mock data.
-// In Phase 2, this client will be used for real API calls.
+// Typed fetch wrapper for the Next.js API routes (same origin).
+// Paths se resuelven relativos al dominio actual, por lo que funciona en
+// dev y producción sin configuración.
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api'
+  process.env.NEXT_PUBLIC_API_URL ?? '/api'
 
 // ─── Error ──────────────────────────────────────────────────────────────────
 
@@ -19,12 +19,11 @@ export class ApiError extends Error {
   }
 }
 
-// ─── Auth helper (placeholder for Clerk) ────────────────────────────────────
+// ─── Auth helper ────────────────────────────────────────────────────────────
+// Same-origin cookie-based sesión de Auth.js. No se requieren headers extra;
+// fetch con `credentials: 'include'` envía la cookie automáticamente.
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  // TODO (Phase 2): get Clerk session token
-  // const token = await clerk.session?.getToken()
-  // if (token) return { Authorization: `Bearer ${token}` }
   return {}
 }
 
@@ -52,6 +51,7 @@ async function request<T>(
 
   const res = await fetch(url.toString(), {
     method,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...authHeaders,

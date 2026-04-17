@@ -35,7 +35,7 @@ export const createClienteSchema = z.object({
 export const updateClienteSchema = createClienteSchema.partial()
 
 export const listClientesQuery = z.object({
-  search: z.string().optional(),
+  q: z.string().optional(),
   estado: estadoCliente.optional(),
 })
 
@@ -58,7 +58,7 @@ export const createEventoSchema = z.object({
 export const updateEventoSchema = createEventoSchema.partial()
 
 export const listEventosQuery = z.object({
-  search: z.string().optional(),
+  q: z.string().optional(),
   estado: estadoEvento.optional(),
   clienteId: uuid.optional(),
 })
@@ -86,7 +86,7 @@ export const createVendorSchema = z.object({
 export const updateVendorSchema = createVendorSchema.partial()
 
 export const listVendorsQuery = z.object({
-  search: z.string().optional(),
+  q: z.string().optional(),
   categoria: categoriaProveedor.optional(),
 })
 

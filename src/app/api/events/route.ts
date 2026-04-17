@@ -2,18 +2,18 @@ import { authenticated, parseJson, parseQuery } from '@/lib/api-handler'
 import { createEventoSchema, listEventosQuery } from '@/lib/validators'
 
 export const GET = authenticated(async ({ req, tx, tenant }) => {
-  const { search, estado, clienteId } = parseQuery(req, listEventosQuery)
+  const { q, estado, clienteId } = parseQuery(req, listEventosQuery)
 
   return tx.evento.findMany({
     where: {
       plannerId: tenant.plannerId,
       ...(estado ? { estado } : {}),
       ...(clienteId ? { clienteId } : {}),
-      ...(search
+      ...(q
         ? {
             OR: [
-              { nombre: { contains: search, mode: 'insensitive' } },
-              { venue: { contains: search, mode: 'insensitive' } },
+              { nombre: { contains: q, mode: 'insensitive' } },
+              { venue: { contains: q, mode: 'insensitive' } },
             ],
           }
         : {}),

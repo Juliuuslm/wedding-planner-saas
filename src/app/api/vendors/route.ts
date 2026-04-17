@@ -2,18 +2,18 @@ import { authenticated, parseJson, parseQuery } from '@/lib/api-handler'
 import { createVendorSchema, listVendorsQuery } from '@/lib/validators'
 
 export const GET = authenticated(async ({ req, tx, tenant }) => {
-  const { search, categoria } = parseQuery(req, listVendorsQuery)
+  const { q, categoria } = parseQuery(req, listVendorsQuery)
 
   return tx.vendor.findMany({
     where: {
       plannerId: tenant.plannerId,
       ...(categoria ? { categoria } : {}),
-      ...(search
+      ...(q
         ? {
             OR: [
-              { nombre: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } },
-              { contacto: { contains: search, mode: 'insensitive' } },
+              { nombre: { contains: q, mode: 'insensitive' } },
+              { email: { contains: q, mode: 'insensitive' } },
+              { contacto: { contains: q, mode: 'insensitive' } },
             ],
           }
         : {}),

@@ -2,18 +2,18 @@ import { authenticated, parseJson, parseQuery } from '@/lib/api-handler'
 import { createClienteSchema, listClientesQuery } from '@/lib/validators'
 
 export const GET = authenticated(async ({ req, tx, tenant }) => {
-  const { search, estado } = parseQuery(req, listClientesQuery)
+  const { q, estado } = parseQuery(req, listClientesQuery)
 
   return tx.cliente.findMany({
     where: {
       plannerId: tenant.plannerId,
       ...(estado ? { estado } : {}),
-      ...(search
+      ...(q
         ? {
             OR: [
-              { nombre: { contains: search, mode: 'insensitive' } },
-              { apellido: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } },
+              { nombre: { contains: q, mode: 'insensitive' } },
+              { apellido: { contains: q, mode: 'insensitive' } },
+              { email: { contains: q, mode: 'insensitive' } },
             ],
           }
         : {}),
