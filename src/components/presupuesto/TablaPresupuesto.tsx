@@ -32,17 +32,20 @@ function fmt(n: number) {
 }
 
 const CATEGORIA_LABEL: Record<CategoriaProveedor, string> = {
-  venue:       'Venue',
-  catering:    'Catering',
-  floreria:    'Florería',
-  fotografia:  'Fotografía',
-  musica:      'Música',
-  decoracion:  'Decoración',
-  video:       'Video',
-  transporte:  'Transporte',
-  iluminacion: 'Iluminación',
-  pasteleria:  'Pastelería',
-  otro:        'Otros',
+  venue:           'Venue',
+  catering:        'Catering',
+  flores:          'Florería',
+  fotografia:      'Fotografía',
+  musica:          'Música',
+  decoracion:      'Decoración',
+  video:           'Video',
+  transporte:      'Transporte',
+  iluminacion:     'Iluminación',
+  pasteleria:      'Pastelería',
+  invitaciones:    'Invitaciones',
+  entretenimiento: 'Entretenimiento',
+  mobiliario:      'Mobiliario',
+  otro:            'Otros',
 }
 
 const ESTADO_MAP = {

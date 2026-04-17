@@ -1,6 +1,10 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { mockEventos, mockClientes, mockPlanner } from '@/data/mock'
+import { getEventoById } from '@/lib/api/eventos'
+import { getClienteById } from '@/lib/api/clientes'
+import { getPlanner } from '@/lib/api/planner'
 
 interface PortalClienteIdLayoutProps {
   children: React.ReactNode
@@ -19,10 +23,11 @@ export default async function PortalClienteIdLayout({
   params,
 }: PortalClienteIdLayoutProps) {
   const { id } = await params
-  const evento  = mockEventos.find((e) => e.id === id)
+  const evento = await getEventoById(id)
   if (!evento) notFound()
 
-  const cliente = mockClientes.find((c) => c.id === evento.clienteId)
+  const cliente = await getClienteById(evento.clienteId)
+  const planner = await getPlanner()
 
   const eventDate = new Date(evento.fecha)
   const today     = new Date()
@@ -58,7 +63,7 @@ export default async function PortalClienteIdLayout({
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold/20 text-xs font-bold text-gold ring-1 ring-gold/30">
               AM
             </div>
-            <span className="text-sm font-medium text-gold/80">{mockPlanner.empresa}</span>
+            <span className="text-sm font-medium text-gold/80">{planner.empresa}</span>
           </div>
 
           {/* Event name */}
@@ -95,8 +100,8 @@ export default async function PortalClienteIdLayout({
 
           {/* Planner contact */}
           <p className="mt-4 text-xs text-white/40">
-            Tu coordinadora: <span className="text-white/70">{mockPlanner.nombre}</span>
-            &nbsp;·&nbsp;{mockPlanner.email}
+            Tu coordinadora: <span className="text-white/70">{planner.nombre}</span>
+            &nbsp;·&nbsp;{planner.email}
           </p>
         </div>
 

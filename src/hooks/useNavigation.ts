@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   NAV_ITEMS,
   NAV_BOTTOM,
@@ -9,7 +9,10 @@ import {
   type BreadcrumbItem,
   type ContextualAction,
 } from '@/lib/nav-config'
-import { mockEventos, mockClientes, mockProveedores } from '@/data/mock'
+import { getEventos } from '@/lib/api/eventos'
+import { getClientes } from '@/lib/api/clientes'
+import { getProveedores } from '@/lib/api/proveedores'
+import type { Evento, Cliente, Proveedor } from '@/types'
 
 export interface NavigationState {
   activeSegment: string
@@ -19,19 +22,37 @@ export interface NavigationState {
 
 export function useNavigation(): NavigationState {
   const pathname = usePathname()
+  const [eventos, setEventos] = useState<Evento[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [proveedores, setProveedores] = useState<Proveedor[]>([])
+
+  useEffect(() => {
+    void Promise.all([getEventos(), getClientes(), getProveedores()]).then(
+      ([e, c, p]) => {
+        setEventos(e)
+        setClientes(c)
+        setProveedores(p)
+      },
+    )
+  }, [])
 
   return useMemo(() => {
     const segments = pathname.split('/').filter(Boolean)
     const activeSegment = segments[0] ?? 'dashboard'
 
-    const breadcrumbs = resolveBreadcrumbs(segments)
+    const breadcrumbs = resolveBreadcrumbs(segments, eventos, clientes, proveedores)
     const contextualAction = CONTEXTUAL_ACTIONS[activeSegment] ?? null
 
     return { activeSegment, breadcrumbs, contextualAction }
-  }, [pathname])
+  }, [pathname, eventos, clientes, proveedores])
 }
 
-function resolveBreadcrumbs(segments: string[]): BreadcrumbItem[] {
+function resolveBreadcrumbs(
+  segments: string[],
+  eventos: Evento[],
+  clientes: Cliente[],
+  proveedores: Proveedor[],
+): BreadcrumbItem[] {
   if (segments.length === 0) {
     return [{ label: 'Dashboard' }]
   }
@@ -55,7 +76,7 @@ function resolveBreadcrumbs(segments: string[]): BreadcrumbItem[] {
   const secondSegment = segments[1]
 
   if (firstSegment === 'eventos') {
-    const evento = mockEventos.find((e) => e.id === secondSegment)
+    const evento = eventos.find((e) => e.id === secondSegment)
     if (evento) {
       breadcrumbs.push({ label: evento.nombre })
       return breadcrumbs
@@ -63,7 +84,7 @@ function resolveBreadcrumbs(segments: string[]): BreadcrumbItem[] {
   }
 
   if (firstSegment === 'clientes') {
-    const cliente = mockClientes.find((c) => c.id === secondSegment)
+    const cliente = clientes.find((c) => c.id === secondSegment)
     if (cliente) {
       breadcrumbs.push({ label: `${cliente.nombre} ${cliente.apellido}` })
       return breadcrumbs
@@ -71,7 +92,7 @@ function resolveBreadcrumbs(segments: string[]): BreadcrumbItem[] {
   }
 
   if (firstSegment === 'proveedores') {
-    const proveedor = mockProveedores.find((p) => p.id === secondSegment)
+    const proveedor = proveedores.find((p) => p.id === secondSegment)
     if (proveedor) {
       breadcrumbs.push({ label: proveedor.nombre })
       return breadcrumbs

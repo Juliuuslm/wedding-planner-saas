@@ -163,7 +163,7 @@ export const mockProveedores: Proveedor[] = [
   {
     id: 'proveedor-1',
     nombre: 'Flores del Valle',
-    categoria: 'floreria',
+    categoria: 'flores',
     contacto: 'Daniela Ríos',
     email: 'contacto@floresdelvalle.mx',
     telefono: '+52 55 2222 3333',
@@ -335,17 +335,17 @@ export const mockLineasPresupuesto: LineaPresupuesto[] = [
   },
   // FLORERÍA (3)
   {
-    id: 'linea-6', eventoId: 'evento-1', categoria: 'floreria',
+    id: 'linea-6', eventoId: 'evento-1', categoria: 'flores',
     concepto: 'Flores y arreglos completos', proveedorId: 'proveedor-1',
     montoEstimado: 38000, montoReal: 40000, montoPagado: 40000, estado: 'pagado',
   },
   {
-    id: 'linea-7', eventoId: 'evento-1', categoria: 'floreria',
+    id: 'linea-7', eventoId: 'evento-1', categoria: 'flores',
     concepto: 'Bouquet novia y damas de honor', proveedorId: 'proveedor-1',
     montoEstimado: 8500, montoReal: 8500, montoPagado: 8500, estado: 'pagado',
   },
   {
-    id: 'linea-8', eventoId: 'evento-1', categoria: 'floreria',
+    id: 'linea-8', eventoId: 'evento-1', categoria: 'flores',
     concepto: 'Centros de mesa (18 mesas)', proveedorId: 'proveedor-1',
     montoEstimado: 9000, montoPagado: 0, estado: 'pendiente',
   },

@@ -2,10 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import {
-  DollarSign,
-  Globe,
-} from 'lucide-react'
+import { Globe } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarGroup } from '@/components/ui/avatar'
@@ -29,25 +26,13 @@ interface EventoTabsProps {
   contratos: Contrato[]
 }
 
+// MVP: equipo fijo, multi-user en v2
 const EQUIPO_VISUAL = [
   { initials: 'AM', nombre: 'Andrea Morales',   rol: 'Coordinadora principal' },
   { initials: 'LP', nombre: 'Luisa Pérez',      rol: 'Asistente de coordinación' },
   { initials: 'MR', nombre: 'Miguel Rodríguez', rol: 'Logística' },
 ]
 
-function PlaceholderTab({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-        <Icon className="h-7 w-7 text-text-muted" />
-      </div>
-      <p className="mt-4 font-semibold text-text-primary">{label}</p>
-      <p className="mt-1 text-sm text-text-muted">
-        Este módulo se construirá en la próxima sesión.
-      </p>
-    </div>
-  )
-}
 
 export function EventoTabs({ evento, cliente, paquete, lineas, tareas, odps, proveedores, contratos }: EventoTabsProps) {
   const fechaLarga = new Date(evento.fecha).toLocaleDateString('es-MX', {
@@ -200,7 +185,71 @@ export function EventoTabs({ evento, cliente, paquete, lineas, tareas, odps, pro
         <DisenoTab evento={evento} />
       </TabsContent>
       <TabsContent value="portal" className="mt-6">
-        <PlaceholderTab icon={Globe} label="Portal del Cliente" />
+        <div className="space-y-6">
+          <div>
+            <h3 className="font-semibold text-text-primary">Portales del evento</h3>
+            <p className="mt-0.5 text-sm text-text-muted">Accede directamente al portal del cliente o al portal de cada proveedor.</p>
+          </div>
+
+          {/* Portal cliente */}
+          {cliente && (
+            <div className="rounded-lg border border-warm-border p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10">
+                  <Globe className="h-4 w-4 text-brand" />
+                </div>
+                <div>
+                  <p className="font-semibold text-text-primary">Portal del cliente</p>
+                  <p className="text-xs text-text-muted">{cliente.nombre} {cliente.apellido}</p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                nativeButton={false}
+                render={<Link href={`/portal-cliente/${evento.id}`} target="_blank" />}
+              >
+                Abrir portal del cliente
+              </Button>
+            </div>
+          )}
+
+          {/* Portales proveedores */}
+          {odps.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-text-secondary">Portales de proveedores</h4>
+              <div className="space-y-2">
+                {[...new Map(odps.map((o) => [o.proveedorId, o])).values()].map((odp) => {
+                  const prov = proveedores.find((p) => p.id === odp.proveedorId)
+                  if (!prov) return null
+                  return (
+                    <div key={prov.id} className="flex items-center justify-between gap-4 rounded-lg border border-warm-border p-4">
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">{prov.nombre}</p>
+                        <p className="text-xs text-text-muted capitalize">{prov.categoria}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        nativeButton={false}
+                        render={<Link href={`/portal-proveedor/${prov.id}`} target="_blank" />}
+                      >
+                        Abrir portal
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {odps.length === 0 && !cliente && (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-warm-border py-16 text-center">
+              <Globe className="h-8 w-8 text-text-muted" />
+              <p className="mt-3 text-sm text-text-muted">No hay portales configurados para este evento.</p>
+            </div>
+          )}
+        </div>
       </TabsContent>
     </Tabs>
   )

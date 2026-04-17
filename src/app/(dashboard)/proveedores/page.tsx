@@ -1,18 +1,18 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Search, Plus } from 'lucide-react'
-import { mockProveedores } from '@/data/mock'
+import { useState, useMemo, useEffect } from 'react'
+import { Search } from 'lucide-react'
+import { getProveedores } from '@/lib/api/proveedores'
 import { ProveedorCard } from '@/components/proveedores/ProveedorCard'
+import { NuevoProveedorDialog } from '@/components/proveedores/NuevoProveedorDialog'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { CategoriaProveedor } from '@/types'
+import type { Proveedor, CategoriaProveedor } from '@/types'
 
 const CATEGORIA_LABEL: Record<string, string> = {
   venue:       'Venue',
   catering:    'Catering',
-  floreria:    'Florería',
+  flores:    'Florería',
   fotografia:  'Fotografía',
   musica:      'Música',
   decoracion:  'Decoración',
@@ -26,16 +26,21 @@ const CATEGORIA_LABEL: Record<string, string> = {
 export default function ProveedoresPage() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroCategoria, setFiltroCategoria] = useState<CategoriaProveedor | 'todos'>('todos')
+  const [proveedores, setProveedores] = useState<Proveedor[]>([])
+
+  useEffect(() => {
+    void getProveedores().then(setProveedores)
+  }, [])
 
   const categorias = useMemo(
     () =>
-      Array.from(new Set(mockProveedores.map((p) => p.categoria))).sort() as CategoriaProveedor[],
-    []
+      Array.from(new Set(proveedores.map((p) => p.categoria))).sort() as CategoriaProveedor[],
+    [proveedores]
   )
 
   const filtrados = useMemo(() => {
     const q = busqueda.toLowerCase()
-    return mockProveedores.filter((p) => {
+    return proveedores.filter((p) => {
       const matchCategoria = filtroCategoria === 'todos' || p.categoria === filtroCategoria
       const matchBusqueda =
         q === '' ||
@@ -43,7 +48,7 @@ export default function ProveedoresPage() {
         p.descripcion?.toLowerCase().includes(q)
       return matchCategoria && matchBusqueda
     })
-  }, [busqueda, filtroCategoria])
+  }, [proveedores, busqueda, filtroCategoria])
 
   return (
     <div className="space-y-6">
@@ -55,10 +60,7 @@ export default function ProveedoresPage() {
             Catálogo de proveedores y órdenes de desempeño
           </p>
         </div>
-        <Button size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Agregar proveedor
-        </Button>
+        <NuevoProveedorDialog />
       </div>
 
       {/* Search */}
@@ -103,7 +105,7 @@ export default function ProveedoresPage() {
 
       {/* Count */}
       <p className="text-sm text-text-muted">
-        {filtrados.length} de {mockProveedores.length} proveedores
+        {filtrados.length} de {proveedores.length} proveedores
       </p>
 
       {/* Grid */}

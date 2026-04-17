@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import {
   CalendarHeart,
   CheckSquare,
@@ -5,14 +7,12 @@ import {
   AlertTriangle,
   TriangleAlert,
 } from 'lucide-react'
-import {
-  mockEventos,
-  mockClientes,
-  mockTareas,
-  mockLineasPresupuesto,
-  mockODPs,
-  mockContratos,
-} from '@/data/mock'
+import { getEventos } from '@/lib/api/eventos'
+import { getClientes } from '@/lib/api/clientes'
+import { getTareasByEvento } from '@/lib/api/tareas'
+import { getPresupuestoByEvento } from '@/lib/api/presupuesto'
+import { getODPsByEvento } from '@/lib/api/odp'
+import { getContratos } from '@/lib/api/contratos'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { EventoCard } from '@/components/dashboard/EventoCard'
 import {
@@ -25,42 +25,6 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-
-// ─── Derived data (module scope — Server Component) ───────────────────────────
-
-const eventosActivos = mockEventos.filter((e) => e.estado === 'activo')
-
-const tareasPendientes = mockTareas
-  .filter((t) => t.estado !== 'completada')
-  .sort(
-    (a, b) =>
-      new Date(a.fechaVencimiento).getTime() -
-      new Date(b.fechaVencimiento).getTime()
-  )
-  .slice(0, 5)
-
-const pagosProximos = mockLineasPresupuesto
-  .filter((l) => l.estado !== 'pagado')
-  .slice(0, 3)
-
-const odpsCount = mockODPs.filter((o) => o.estado === 'pendiente').length
-
-const montoPagos = mockLineasPresupuesto
-  .filter((l) => l.estado !== 'pagado')
-  .reduce((sum, l) => sum + (l.montoEstimado - l.montoPagado), 0)
-
-const alertas = [
-  ...mockODPs
-    .filter((o) => o.estado === 'pendiente')
-    .map((o) => ({
-      mensaje: `ODP pendiente de confirmación: ${o.descripcion.split('—')[0].trim()}`,
-    })),
-  ...mockContratos
-    .filter((c) => c.estado === 'enviado')
-    .map((c) => ({
-      mensaje: `Contrato sin firmar enviado a ${c.contraparte}`,
-    })),
-].slice(0, 3)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -94,7 +58,63 @@ const ESTADO_TAREA_STYLE: Record<string, { label: string; className: string }> =
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [allEventos, allClientes, allContratos] = await Promise.all([
+    getEventos(),
+    getClientes(),
+    getContratos(),
+  ])
+
+  const eventosActivos = allEventos.filter((e) => e.estado === 'activo')
+
+  // Gather tasks and budget lines from all events
+  const allTareasArrays = await Promise.all(
+    allEventos.map((e) => getTareasByEvento(e.id)),
+  )
+  const allTareas = allTareasArrays.flat()
+
+  const allPresupuestos = await Promise.all(
+    allEventos.map((e) => getPresupuestoByEvento(e.id)),
+  )
+  const allLineas = allPresupuestos.flatMap((p) => p.lineas)
+
+  const allODPsArrays = await Promise.all(
+    allEventos.map((e) => getODPsByEvento(e.id)),
+  )
+  const allODPs = allODPsArrays.flat()
+
+  const tareasPendientes = allTareas
+    .filter((t) => t.estado !== 'completada')
+    .sort(
+      (a, b) =>
+        new Date(a.fechaVencimiento).getTime() -
+        new Date(b.fechaVencimiento).getTime()
+    )
+    .slice(0, 5)
+
+  const pagosProximos = allLineas
+    .filter((l) => l.estado !== 'pagado')
+    .slice(0, 3)
+
+  const odpsCount = allODPs.filter((o) => o.estado === 'pendiente').length
+
+  const montoPagos = allLineas
+    .filter((l) => l.estado !== 'pagado')
+    .reduce((sum, l) => sum + (l.montoEstimado - l.montoPagado), 0)
+
+  const alertas = [
+    ...allODPs
+      .filter((o) => o.estado === 'pendiente')
+      .map((o) => ({
+        mensaje: `ODP pendiente de confirmación: ${o.descripcion.split('—')[0].trim()}`,
+      })),
+    ...allContratos
+      .filter((c) => c.estado === 'enviado')
+      .map((c) => ({
+        mensaje: `Contrato sin firmar enviado a ${c.contraparte}`,
+      })),
+  ].slice(0, 3)
+
   const hoy = new Date().toLocaleDateString('es-MX', {
     weekday: 'long',
     day: 'numeric',
@@ -120,7 +140,7 @@ export default function DashboardPage() {
       {/* ── KPI Cards — staggered entrance ────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '0ms', animationDuration: '350ms' }}>
-          <KpiCard label="Eventos activos" value={eventosActivos.length} description={`De ${mockEventos.length} en total`} icon={CalendarHeart} iconClassName="bg-gold/10 text-gold" />
+          <KpiCard label="Eventos activos" value={eventosActivos.length} description={`De ${allEventos.length} en total`} icon={CalendarHeart} iconClassName="bg-gold/10 text-gold" />
         </div>
         <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '80ms', animationDuration: '350ms' }}>
           <KpiCard label="Tareas pendientes" value={tareasPendientes.length} description="Próximas a vencer" icon={CheckSquare} iconClassName="bg-brand/10 text-brand" />
@@ -139,8 +159,8 @@ export default function DashboardPage() {
           Mis eventos activos
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {mockEventos.map((evento) => {
-            const cliente = mockClientes.find((c) => c.id === evento.clienteId)
+          {allEventos.map((evento) => {
+            const cliente = allClientes.find((c) => c.id === evento.clienteId)
             return (
               <EventoCard key={evento.id} evento={evento} cliente={cliente} />
             )
@@ -159,7 +179,7 @@ export default function DashboardPage() {
           <div className="overflow-hidden rounded-lg border border-warm-border bg-background">
             <ul className="divide-y divide-warm-border">
               {tareasPendientes.map((tarea) => {
-                const evento = mockEventos.find((e) => e.id === tarea.eventoId)
+                const evento = allEventos.find((e) => e.id === tarea.eventoId)
                 const estilo = ESTADO_TAREA_STYLE[tarea.estado]
                 return (
                   <li key={tarea.id} className="flex items-start gap-3 px-4 py-3">

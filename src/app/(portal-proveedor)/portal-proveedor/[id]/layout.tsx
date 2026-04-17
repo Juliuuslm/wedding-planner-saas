@@ -1,21 +1,26 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
-import { mockProveedores } from '@/data/mock'
+import { getProveedorById } from '@/lib/api/proveedores'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { CategoriaProveedor } from '@/types'
 
 const CATEGORIA_LABEL: Record<CategoriaProveedor, string> = {
-  floreria:    'Florería',
-  fotografia:  'Fotografía',
-  catering:    'Catering',
-  musica:      'Música',
-  decoracion:  'Decoración',
-  venue:       'Venue',
-  video:       'Video',
-  transporte:  'Transporte',
-  iluminacion: 'Iluminación',
-  pasteleria:  'Pastelería',
-  otro:        'Otro',
+  flores:          'Florería',
+  fotografia:      'Fotografía',
+  catering:        'Catering',
+  musica:          'Música',
+  decoracion:      'Decoración',
+  venue:           'Venue',
+  video:           'Video',
+  transporte:      'Transporte',
+  iluminacion:     'Iluminación',
+  pasteleria:      'Pastelería',
+  invitaciones:    'Invitaciones',
+  entretenimiento: 'Entretenimiento',
+  mobiliario:      'Mobiliario',
+  otro:            'Otro',
 }
 
 interface PortalProveedorLayoutProps {
@@ -28,7 +33,7 @@ export default async function PortalProveedorIdLayout({
   params,
 }: PortalProveedorLayoutProps) {
   const { id } = await params
-  const proveedor = mockProveedores.find((p) => p.id === id)
+  const proveedor = await getProveedorById(id)
   if (!proveedor) notFound()
 
   const initials = proveedor.nombre

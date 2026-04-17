@@ -1,6 +1,12 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
-import { CheckCircle2, Clock, CalendarDays, Flower2, Heart, Users, UtensilsCrossed, Palette, Circle } from 'lucide-react'
-import { mockEventos, mockTareas } from '@/data/mock'
+import { CheckCircle2, Clock, CalendarDays, Heart, Users, UtensilsCrossed, Palette, Circle } from 'lucide-react'
+import { getEventoById } from '@/lib/api/eventos'
+import { getTareasByEvento } from '@/lib/api/tareas'
+import { getODPsByEvento } from '@/lib/api/odp'
+import { getProveedorById } from '@/lib/api/proveedores'
+import { AprobacionActions } from './AprobacionActions'
 import type { EstadoTarea } from '@/types'
 
 interface Props {
@@ -8,6 +14,7 @@ interface Props {
 }
 
 type HitoEstado = 'completado' | 'en_progreso' | 'proximo' | 'pendiente'
+
 
 interface Hito {
   titulo:     string
@@ -28,21 +35,6 @@ function derivarEstadoFase(tareas: { fase: string; estado: EstadoTarea }[], fase
   return 'pendiente'
 }
 
-const APROBACIONES_MOCK = [
-  {
-    id: 1,
-    titulo: 'Paleta de colores definitiva',
-    descripcion: 'Tu coordinadora espera tu confirmación sobre la combinación final: blanco marfil, verde salvia y terracota.',
-    urgencia: 'Esta semana',
-  },
-  {
-    id: 2,
-    titulo: 'Menú de cena',
-    descripcion: 'Elige entre las 3 propuestas del chef para el menú de 3 tiempos. Incluye opción vegetariana.',
-    urgencia: 'En los próximos 15 días',
-  },
-]
-
 const HITO_ICONS: Record<string, React.ElementType> = {
   'Contratación':    CheckCircle2,
   'Diseño':          Palette,
@@ -54,10 +46,29 @@ const HITO_ICONS: Record<string, React.ElementType> = {
 
 export default async function PortalClienteProgresoPage({ params }: Props) {
   const { id } = await params
-  const evento = mockEventos.find((e) => e.id === id)
+  const evento = await getEventoById(id)
   if (!evento) notFound()
 
-  const tareas = mockTareas.filter((t) => t.eventoId === id)
+  const [tareas, odps] = await Promise.all([
+    getTareasByEvento(id),
+    getODPsByEvento(id),
+  ])
+
+  // Build aprobaciones from pending ODPs
+  const odpsPendientes = odps.filter((o) => o.estado === 'pendiente')
+  const aprobaciones = await Promise.all(
+    odpsPendientes.map(async (odp) => {
+      const proveedor = await getProveedorById(odp.proveedorId).catch(() => null)
+      return {
+        id: odp.id,
+        titulo: odp.descripcion,
+        descripcion: proveedor
+          ? `Servicio de ${proveedor.nombre} — ${new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(odp.monto)}`
+          : odp.descripcion,
+        urgencia: `Servicio el ${new Date(odp.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })}`,
+      }
+    }),
+  )
 
   const FASES_ORDEN = ['Contratación', 'Diseño', 'Logística', 'Comunicación', 'Día del evento']
   const fasesConTareas = [...new Set(tareas.map((t) => t.fase))]
@@ -188,32 +199,31 @@ export default async function PortalClienteProgresoPage({ params }: Props) {
       </section>
 
       {/* ── Pending approvals ────────────────────────────────────── */}
-      {APROBACIONES_MOCK.length > 0 && (
+      {aprobaciones.length > 0 && (
         <section>
           <h2 className="mb-1 text-lg font-semibold text-text-primary">Aprobaciones pendientes</h2>
           <p className="mb-5 text-sm text-text-muted">
             Tu coordinadora necesita tu confirmación en los siguientes puntos.
           </p>
           <div className="space-y-3">
-            {APROBACIONES_MOCK.map((aprobacion) => (
+            {aprobaciones.map((aprobacion) => (
               <div
                 key={aprobacion.id}
                 className="rounded-2xl border border-[#EAE7E0] bg-white p-5 shadow-sm"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-gold" />
-                      <p className="font-semibold text-text-primary">{aprobacion.titulo}</p>
-                    </div>
-                    <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
-                      {aprobacion.descripcion}
-                    </p>
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-text-muted">
-                      <Clock className="h-3.5 w-3.5" />
-                      {aprobacion.urgencia}
-                    </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-gold" />
+                    <p className="font-semibold text-text-primary">{aprobacion.titulo}</p>
                   </div>
+                  <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
+                    {aprobacion.descripcion}
+                  </p>
+                  <div className="mt-3 flex items-center gap-1.5 text-xs text-text-muted">
+                    <Clock className="h-3.5 w-3.5" />
+                    {aprobacion.urgencia}
+                  </div>
+                  <AprobacionActions odpId={aprobacion.id} />
                 </div>
               </div>
             ))}

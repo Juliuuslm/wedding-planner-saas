@@ -1,5 +1,7 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
-import { mockEventos, mockClientes, mockPaquetes, mockLineasPresupuesto, mockTareas, mockODPs, mockProveedores, mockContratos } from '@/data/mock'
+import { getEventoFull } from '@/lib/api/eventos'
 import { EventoHeader } from '@/components/eventos/EventoHeader'
 import { EventoTabs } from '@/components/eventos/EventoTabs'
 
@@ -9,16 +11,10 @@ interface Props {
 
 export default async function EventoPage({ params }: Props) {
   const { id } = await params
-  const evento  = mockEventos.find((e) => e.id === id)
-  if (!evento) notFound()
+  const data = await getEventoFull(id)
+  if (!data) notFound()
 
-  const cliente = mockClientes.find((c) => c.id === evento.clienteId)
-  const paquete = mockPaquetes.find((p) => p.id === evento.paqueteId)
-  const lineas     = mockLineasPresupuesto.filter((l) => l.eventoId === evento.id)
-  const tareas     = mockTareas.filter((t) => t.eventoId === evento.id)
-  const odps       = mockODPs.filter((o) => o.eventoId === evento.id)
-  const proveedores = mockProveedores
-  const contratos   = mockContratos.filter((c) => c.eventoId === evento.id)
+  const { evento, cliente, paquete, lineas, tareas, odps, proveedores, contratos } = data
 
   return (
     <div className="space-y-8">

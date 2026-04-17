@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Upload } from 'lucide-react'
-import { mockEventos } from '@/data/mock'
+import { getEventos } from '@/lib/api/eventos'
 import { Button } from '@/components/ui/button'
 import { AssetCard, type Asset, type CategoriaAsset } from '@/components/diseno/AssetCard'
 import { cn } from '@/lib/utils'
+import type { Evento } from '@/types'
 
 // All assets across all events
 const ALL_ASSETS: Asset[] = [
@@ -29,6 +30,11 @@ const CATEGORIAS: CategoriaAsset[] = ['Paleta', 'Flores', 'Decoración', 'Invita
 export default function DisenoPage() {
   const [filtroEvento,    setFiltroEvento]    = useState<string>('todos')
   const [filtroCategoria, setFiltroCategoria] = useState<CategoriaAsset | 'Todos'>('Todos')
+  const [eventos, setEventos] = useState<Evento[]>([])
+
+  useEffect(() => {
+    void getEventos().then(setEventos)
+  }, [])
 
   const filtrados = useMemo(() =>
     ALL_ASSETS.filter((a) => {
@@ -39,7 +45,7 @@ export default function DisenoPage() {
   [filtroEvento, filtroCategoria])
 
   function getNombreEvento(id: string) {
-    return mockEventos.find((e) => e.id === id)?.nombre ?? id
+    return eventos.find((e) => e.id === id)?.nombre ?? id
   }
 
   return (
@@ -63,7 +69,7 @@ export default function DisenoPage() {
         {/* Evento filter */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-text-muted">Evento:</span>
-          {([{ id: 'todos', label: 'Todos' }, ...mockEventos.map((e) => ({ id: e.id, label: e.nombre }))] as { id: string; label: string }[]).map((e) => (
+          {([{ id: 'todos', label: 'Todos' }, ...eventos.map((e) => ({ id: e.id, label: e.nombre }))] as { id: string; label: string }[]).map((e) => (
             <button
               key={e.id}
               onClick={() => setFiltroEvento(e.id)}

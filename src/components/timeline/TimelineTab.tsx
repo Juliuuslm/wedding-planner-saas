@@ -65,7 +65,7 @@ export function TimelineTab({ evento, tareas }: TimelineTabProps) {
             </button>
           ))}
         </div>
-        <NuevaTareaDialog />
+        <NuevaTareaDialog eventoId={evento.id} />
       </div>
 
       {/* Filtros */}

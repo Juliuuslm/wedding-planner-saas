@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
-import { mockContratos, mockEventos } from '@/data/mock'
+import { useMemo, useState, useEffect } from 'react'
+import Link from 'next/link'
+import { getContratos } from '@/lib/api/contratos'
+import { getEventos } from '@/lib/api/eventos'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -13,8 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { NuevoContratoGlobalDialog } from '@/components/contratos/NuevoContratoGlobalDialog'
 import { cn } from '@/lib/utils'
-import type { EstadoContrato, TipoContrato } from '@/types'
+import type { Contrato, Evento, EstadoContrato, TipoContrato } from '@/types'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-MX', {
@@ -56,17 +58,26 @@ const ESTADOS_FILTRO: Array<{ value: 'todos' | EstadoContrato; label: string }> 
 export default function ContratosPage() {
   const [filtroTipo, setFiltroTipo]     = useState<'todos' | TipoContrato>('todos')
   const [filtroEstado, setFiltroEstado] = useState<'todos' | EstadoContrato>('todos')
+  const [contratos, setContratos] = useState<Contrato[]>([])
+  const [eventos, setEventos] = useState<Evento[]>([])
+
+  useEffect(() => {
+    void Promise.all([getContratos(), getEventos()]).then(([c, e]) => {
+      setContratos(c)
+      setEventos(e)
+    })
+  }, [])
 
   const filtrados = useMemo(() =>
-    mockContratos.filter((c) => {
+    contratos.filter((c) => {
       const matchTipo   = filtroTipo   === 'todos' || c.tipo   === filtroTipo
       const matchEstado = filtroEstado === 'todos' || c.estado === filtroEstado
       return matchTipo && matchEstado
     }),
-  [filtroTipo, filtroEstado])
+  [contratos, filtroTipo, filtroEstado])
 
   function getNombreEvento(eventoId: string) {
-    return mockEventos.find((e) => e.id === eventoId)?.nombre ?? '—'
+    return eventos.find((e) => e.id === eventoId)?.nombre ?? '—'
   }
 
   return (
@@ -76,13 +87,10 @@ export default function ContratosPage() {
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Contratos</h1>
           <p className="mt-0.5 text-sm text-text-muted">
-            {filtrados.length} de {mockContratos.length} contratos
+            {filtrados.length} de {contratos.length} contratos
           </p>
         </div>
-        <Button size="sm" variant="outline">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Nuevo contrato
-        </Button>
+        <NuevoContratoGlobalDialog />
       </div>
 
       {/* Filters */}
@@ -185,7 +193,13 @@ export default function ContratosPage() {
                       {fmtDate(contrato.fechaFirma)}
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="ghost" className="text-text-muted">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-text-muted"
+                        nativeButton={false}
+                        render={<Link href={`/eventos/${contrato.eventoId}`} />}
+                      >
                         Ver
                       </Button>
                     </TableCell>

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
@@ -7,7 +9,6 @@ import {
   CalendarDays,
   Users,
   ArrowLeft,
-  Edit,
   FileText,
   Download,
   ArrowRight,
@@ -25,12 +26,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  mockClientes,
-  mockEventos,
-  mockLineasPresupuesto,
-  mockContratos,
-} from '@/data/mock'
+import { getClienteById } from '@/lib/api/clientes'
+import { getEventos } from '@/lib/api/eventos'
+import { getPresupuestoByEvento } from '@/lib/api/presupuesto'
+import { getContratosByContraparteId } from '@/lib/api/contratos'
+import { EditarClienteDialog } from '@/components/clientes/EditarClienteDialog'
 import { cn } from '@/lib/utils'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,16 +79,15 @@ interface Props {
 
 export default async function ClientePerfilPage({ params }: Props) {
   const { id } = await params
-  const cliente = mockClientes.find((c) => c.id === id)
+  const cliente = await getClienteById(id)
   if (!cliente) notFound()
 
-  const evento = mockEventos.find((e) => e.clienteId === cliente.id)
+  const allEventos = await getEventos()
+  const evento = allEventos.find((e) => e.clienteId === cliente.id)
   const lineas = evento
-    ? mockLineasPresupuesto.filter((l) => l.eventoId === evento.id)
+    ? (await getPresupuestoByEvento(evento.id)).lineas
     : []
-  const contratos = mockContratos.filter(
-    (c) => c.contraparteId === cliente.id && c.tipo === 'cliente'
-  )
+  const contratos = await getContratosByContraparteId(cliente.id, 'cliente')
 
   const initials = (cliente.nombre[0] + cliente.apellido[0]).toUpperCase()
   const estadoCliente = ESTADO_CLIENTE_MAP[cliente.estado]
@@ -130,10 +129,7 @@ export default async function ClientePerfilPage({ params }: Props) {
             </div>
           </div>
         </div>
-        <Button size="sm" variant="outline">
-          <Edit className="mr-1.5 h-4 w-4" />
-          Editar
-        </Button>
+        <EditarClienteDialog cliente={cliente} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -214,13 +210,9 @@ export default async function ClientePerfilPage({ params }: Props) {
               <CardTitle className="text-sm font-semibold">Notas</CardTitle>
             </CardHeader>
             <CardContent>
-              <textarea
-                readOnly
-                defaultValue={cliente.notas ?? ''}
-                placeholder="Sin notas..."
-                rows={5}
-                className="w-full resize-none rounded-md border border-warm-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
-              />
+              <p className="text-sm leading-relaxed text-text-secondary whitespace-pre-wrap">
+                {cliente.notas ?? <span className="italic text-text-muted">Sin notas...</span>}
+              </p>
             </CardContent>
           </Card>
 

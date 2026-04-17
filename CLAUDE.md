@@ -1,84 +1,95 @@
 # CLAUDE.md — Plataforma SaaS Wedding Planners
 
-> Este archivo se carga automáticamente en cada sesión de Claude Code.
-> Contiene las reglas, convenciones y contexto del proyecto.
+> Archivo carga automático cada sesión Claude Code.
+> Reglas, convenciones y contexto del proyecto.
 
 ---
 
 ## Contexto del proyecto
 
-Plataforma SaaS web para **wedding planners profesionales y sus proveedores**, orientada al mercado latinoamericano. El producto centraliza gestión de clientes, presupuesto, diseño visual, contratos, hoja de ruta, catálogo de proveedores y portal del cliente en una sola aplicación.
+Plataforma SaaS web para **wedding planners profesionales y proveedores**, mercado latinoamericano. Centraliza gestión clientes, presupuesto, diseño visual, contratos, hoja de ruta, catálogo proveedores y portal cliente en una app.
 
-Documentación completa del proyecto: `@proyecto-overview.md`  
+Documentación completa: `@proyecto-overview.md`
 Roadmap detallado: `@roadmap.md`
+Plan migración activo: `/Users/Abraham.Almazan/.claude-stkr/plans/okey-dame-un-plan-cheerful-pond.md`
 
 ---
 
 ## Tech Stack
 
-**Frontend:** Next.js 14 (App Router) + React 18 + TypeScript  
-**UI Base:** Tailwind CSS + Shadcn/ui  
-**UI Especializada:** TanStack Table, FullCalendar, DnD Kit, React PDF  
-**Backend (fase 2):** Rust + Axum  
-**Base de datos (fase 2):** PostgreSQL + SQLx  
-**Auth (fase 2):** Clerk  
+> **Migración activa** de backend Rust+Axum separado → monolito Next.js full-stack. Rust legacy en rama `archive/rust-backend`. No tocar `/backend` si aún existe en main.
+
+**Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
+**UI Base:** Tailwind CSS 4 + Shadcn/ui
+**UI Especializada:** TanStack Table, FullCalendar, DnD Kit, React PDF, cmdk
+**API:** Next.js Route Handlers (`src/app/api/**/route.ts`) — mismo proceso que frontend
+**ORM:** Prisma 5 (schema en `prisma/schema.prisma`, cliente en `src/lib/prisma.ts`)
+**DB:** PostgreSQL 16 (Docker local vía `docker-compose.yml`; Neon o Supabase en prod)
+**Auth:** Auth.js v5 (NextAuth) + Prisma adapter — magic-link vía Resend. **NO Clerk.**
+**Validación:** Zod en endpoints y formularios
+**Multitenant:** RLS Postgres. Request setea `SET LOCAL app.current_planner` dentro transacción. Defensa profundidad: `where: { plannerId }` en Prisma también.
+**Deploy:** Vercel (app + API) + Neon/Supabase (DB)
 
 ---
 
 ## Convenciones de código
 
-- TypeScript estricto en todos los archivos. Sin `any` salvo casos justificados con comentario.
+- TypeScript estricto todos archivos. Sin `any` salvo casos justificados con comentario.
 - Imports con alias `@/` para rutas absolutas desde `src/`.
-- Componentes en PascalCase. Archivos de componentes en kebab-case.
-- Funciones y variables en camelCase.
-- Constantes globales en SCREAMING_SNAKE_CASE.
-- Usar `const` por defecto, `let` solo cuando la variable se reasigna.
-- No usar `default export` en archivos con múltiples exports. Usar named exports.
-- Los componentes de página van en `src/app/`, los componentes reutilizables en `src/components/`.
+- Componentes PascalCase. Archivos componentes kebab-case.
+- Funciones y variables camelCase.
+- Constantes globales SCREAMING_SNAKE_CASE.
+- `const` defecto, `let` solo si variable se reasigna.
+- No `default export` en archivos con múltiples exports. Named exports.
+- Componentes página en `src/app/`, reutilizables en `src/components/`.
 
 ---
 
 ## Estructura de carpetas
 
 ```
+prisma/
+  schema.prisma           # Modelos Prisma (fuente de verdad schema DB)
+  migrations/             # Migraciones Prisma Migrate
+  seed.ts                 # Seed dev (usa src/data/mock.ts)
 src/
-  app/                    # Rutas de Next.js (App Router)
-    (dashboard)/          # Rutas del panel del planner (con layout compartido)
-    (portal-cliente)/     # Rutas del portal del cliente
-    (portal-proveedor)/   # Rutas del portal del proveedor
-    page.tsx              # Landing page
+  app/
+    (dashboard)/          # Panel planner (layout compartido)
+    (portal-cliente)/     # Portal cliente
+    (portal-proveedor)/   # Portal proveedor
+    api/                  # Route Handlers (endpoints REST)
+      auth/[...nextauth]/ # Handler Auth.js
+      clients/ events/ vendors/ contracts/ tasks/ odps/ packages/ planner/me/
+    page.tsx              # Landing
   components/
-    ui/                   # Componentes base de Shadcn/ui
-    layout/               # Shell, sidebar, header, breadcrumbs
-    dashboard/            # Componentes del dashboard
-    eventos/              # Módulo de eventos/bodas
-    presupuesto/          # Módulo de presupuesto
-    timeline/             # Módulo de hoja de ruta
-    proveedores/          # Módulo de proveedores
-    contratos/            # Módulo de contratos
-    clientes/             # CRM de clientes
-    diseno/               # Módulo de diseño (Canva placeholder)
-    portal/               # Portales de cliente y proveedor
-  lib/                    # Utilidades, helpers, configuraciones
-  types/                  # Tipos TypeScript compartidos
-  data/                   # Mock data para el prototipo
-  hooks/                  # Custom hooks de React
+    ui/ layout/ dashboard/
+    eventos/ presupuesto/ timeline/ proveedores/ contratos/ clientes/ diseno/ portal/
+  lib/
+    prisma.ts             # Cliente Prisma singleton
+    auth.ts               # Config Auth.js v5 + Prisma adapter
+    db-tenant.ts          # withTenant(plannerId, fn) — transacción + SET LOCAL
+    api-handler.ts        # Wrapper Route Handler: sesión, plannerId, errores
+    api-client.ts         # Cliente fetch tipado (client components)
+  types/                  # Tipos UI (tipos DB desde @prisma/client)
+  data/                   # Mock data (usado solo por prisma/seed.ts)
+  hooks/                  # Custom hooks React
+  middleware.ts           # Guardias rutas por rol (planner/client/vendor)
 ```
 
 ---
 
 ## Sistema de diseño
 
-**Fuente principal:** Plus Jakarta Sans (importar desde Google Fonts)  
-**Fuente código/monospace:** JetBrains Mono  
+**Fuente principal:** Plus Jakarta Sans (Google Fonts)
+**Fuente código/monospace:** JetBrains Mono
 
-**Paleta de colores** (definir en `tailwind.config.ts` y CSS variables):
-- `brand`: #1A1A2E (navy profundo — color primario de la marca)
+**Paleta colores** (en `tailwind.config.ts` + CSS vars):
+- `brand`: #1A1A2E (navy profundo — primario marca)
 - `brand-light`: #16213E
-- `accent`: #C9A96E (oro cálido — acento premium)
+- `accent`: #C9A96E (oro cálido — premium)
 - `accent-light`: #E8D5B0
 - `surface`: #FAFAF9 (fondo principal)
-- `surface-2`: #F4F3F0 (fondo de cards)
+- `surface-2`: #F4F3F0 (fondo cards)
 - `border`: #E5E3DC
 - `text-primary`: #1C1B1A
 - `text-secondary`: #6B6860
@@ -87,43 +98,63 @@ src/
 - `warning`: #B5830A
 - `danger`: #C0392B
 
-**Estética objetivo:** Sofisticado y funcional. Similar a Linear o Vercel dashboard pero con calidez. Nada de gradientes morados genéricos. No rosa cliché de bodas. Es una herramienta profesional, no una revista nupcial.
+**Estética:** Sofisticado y funcional. Similar Linear/Vercel dashboard con calidez. Sin gradientes morados genéricos. Sin rosa cliché bodas. Herramienta profesional, no revista nupcial.
 
-**Espaciado:** Usar la escala de Tailwind. Preferir espaciado generoso (padding 6-8 en cards).  
-**Radios:** `rounded-lg` para cards, `rounded-md` para inputs y botones, `rounded-full` para avatares y badges.  
-**Sombras:** Sutiles. Usar `shadow-sm` por defecto, `shadow-md` para elementos elevados.  
-**Animaciones:** CSS transitions suaves (200-300ms). Stagger en listas. Micro-interacciones en hover.
+**Espaciado:** Escala Tailwind. Generoso (padding 6-8 cards).
+**Radios:** `rounded-lg` cards, `rounded-md` inputs/botones, `rounded-full` avatares/badges.
+**Sombras:** Sutiles. `shadow-sm` defecto, `shadow-md` elevados.
+**Animaciones:** CSS transitions 200-300ms. Stagger listas. Micro-interacciones hover. Respetar `prefers-reduced-motion`.
 
 ---
 
-## Datos mock
+## Datos mock y seed
 
-Todos los datos mock van en `src/data/`. Usar datos coherentes a lo largo de todo el prototipo:
-- Planner: "Andrea Morales" — empresa "AM Wedding Studio"
-- 3 eventos activos con nombres, fechas y estados distintos
-- 5-8 proveedores con categorías variadas
-- 2-3 clientes en estados diferentes (activo, completado, prospecto)
+`src/data/mock.ts` = fuente que alimenta `prisma/seed.ts`. Datos coherentes:
+- Planner: "Andrea Morales" — "AM Wedding Studio"
+- 3 eventos activos con nombres/fechas/estados distintos
+- 5-8 proveedores categorías variadas
+- 2-3 clientes estados diferentes (activo/completado/prospecto)
 
-Los tipos de los datos mock deben estar definidos en `src/types/` y ser los mismos tipos que usará el backend en fase 2.
+Páginas que aún lean `mock.ts` directo = legacy. Migrar a queries Prisma (server components) o fetch API (client components).
+
+Modelos canónicos viven en `prisma/schema.prisma`. Tipos desde `@prisma/client`. `src/types/` solo para tipos UI que no mapean 1:1 con DB.
+
+---
+
+## Multitenancy y RLS
+
+Toda tabla tenant-scoped lleva `planner_id`. Policies RLS filtran por `current_setting('app.current_planner')`. Reglas duras:
+
+1. **Nunca** queries Prisma fuera de `withTenant(plannerId, fn)` en endpoints autenticados. Helper abre transacción + `SET LOCAL app.current_planner`.
+2. **Además** `where: { plannerId }` explícito en query Prisma. Defensa profundidad.
+
+Portales cliente/proveedor: sesión Auth.js lleva `role` + `scopeId` (clienteId o vendorId). Policies extra filtran por scope según rol.
 
 ---
 
 ## Comandos útiles
 
 ```bash
-npm run dev          # Servidor de desarrollo
-npm run build        # Build de producción
-npm run type-check   # Verificar tipos TypeScript
-npm run lint         # ESLint
+pnpm dev             # Dev server (front + API)
+pnpm build           # Build prod
+pnpm type-check      # tsc --noEmit
+pnpm lint            # ESLint
+pnpm db:up           # docker compose up -d (Postgres local)
+pnpm db:migrate      # prisma migrate dev
+pnpm db:seed         # Poblar DB con mock.ts
+pnpm db:studio       # Prisma Studio
+pnpm db:reset        # Reset completo
 ```
 
 ---
 
 ## Reglas de trabajo
 
-- Siempre correr `npm run type-check` después de cambios de código.
-- Verificar visualmente en el navegador después de cambios de UI.
-- Un componente por archivo. Sin mezclar lógica de negocio con presentación.
-- Los datos mock NUNCA van hardcodeados en componentes. Siempre importar de `src/data/`.
-- Mantener consistencia visual entre todas las pantallas del prototipo.
-- En el prototipo (Fase 1), sin llamadas a APIs reales. Todo con datos mock.
+- Correr `pnpm type-check` tras cambios código.
+- Cambios `prisma/schema.prisma` → `pnpm db:migrate` + commit migración generada.
+- Verificar visual en navegador tras cambios UI.
+- Un componente por archivo. No mezclar lógica negocio con presentación.
+- Endpoints nuevos: validar input con Zod + envolver con `withTenant` (o wrapper `api-handler`).
+- Nunca rol `postgres` superuser desde app. Connection string usa `app_user` (sin BYPASSRLS).
+- Nunca push `main` sin pasar `pnpm type-check` + `pnpm lint`.
+- Consultar plan migración en `/Users/Abraham.Almazan/.claude-stkr/plans/okey-dame-un-plan-cheerful-pond.md` antes cambios grandes.

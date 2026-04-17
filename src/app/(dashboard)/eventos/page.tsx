@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CalendarRange } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EventoCard } from '@/components/eventos/EventoCard'
 import { NuevoEventoDialog } from '@/components/eventos/NuevoEventoDialog'
-import { mockEventos, mockClientes } from '@/data/mock'
-import type { EstadoEvento } from '@/types'
+import { getEventos } from '@/lib/api/eventos'
+import { getClientes } from '@/lib/api/clientes'
+import type { Evento, Cliente, EstadoEvento } from '@/types'
 import { cn } from '@/lib/utils'
 
 type FiltroEstado = 'todos' | EstadoEvento
@@ -28,10 +29,19 @@ const FILTROS_FECHA: { value: FiltroFecha; label: string }[] = [
 export default function EventosPage() {
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('todos')
   const [filtroFecha, setFiltroFecha]   = useState<FiltroFecha>('todos')
+  const [eventos, setEventos] = useState<Evento[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+
+  useEffect(() => {
+    void Promise.all([getEventos(), getClientes()]).then(([e, c]) => {
+      setEventos(e)
+      setClientes(c)
+    })
+  }, [])
 
   const eventosFiltrados = useMemo(() => {
     const ahora = new Date()
-    return mockEventos.filter((e) => {
+    return eventos.filter((e) => {
       if (filtroEstado !== 'todos' && e.estado !== filtroEstado) return false
       if (filtroFecha !== 'todos') {
         const fecha = new Date(e.fecha)
@@ -41,7 +51,7 @@ export default function EventosPage() {
       }
       return true
     })
-  }, [filtroEstado, filtroFecha])
+  }, [eventos, filtroEstado, filtroFecha])
 
   return (
     <div className="space-y-6">
@@ -49,7 +59,7 @@ export default function EventosPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Mis Eventos</h1>
-          <p className="text-sm text-text-muted">{mockEventos.length} eventos en total</p>
+          <p className="text-sm text-text-muted">{eventos.length} eventos en total</p>
         </div>
         <NuevoEventoDialog />
       </div>
@@ -94,7 +104,7 @@ export default function EventosPage() {
       {eventosFiltrados.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {eventosFiltrados.map((evento) => {
-            const cliente = mockClientes.find((c) => c.id === evento.clienteId)
+            const cliente = clientes.find((c) => c.id === evento.clienteId)
             return <EventoCard key={evento.id} evento={evento} cliente={cliente} />
           })}
         </div>

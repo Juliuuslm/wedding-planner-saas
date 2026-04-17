@@ -10,7 +10,7 @@ import type { Proveedor } from '@/types'
 const CATEGORIA_LABEL: Record<string, string> = {
   venue:       'Venue',
   catering:    'Catering',
-  floreria:    'Florería',
+  flores:    'Florería',
   fotografia:  'Fotografía',
   musica:      'Música',
   decoracion:  'Decoración',

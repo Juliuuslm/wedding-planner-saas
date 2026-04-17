@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -7,16 +9,18 @@ import {
   Phone,
   Globe,
   MessageCircle,
-  Edit,
   CheckCircle2,
   CalendarDays,
 } from 'lucide-react'
-import { mockProveedores, mockODPs, mockEventos } from '@/data/mock'
+import { getProveedorById } from '@/lib/api/proveedores'
+import { getODPsByProveedor } from '@/lib/api/odp'
+import { getEventos } from '@/lib/api/eventos'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { EditarProveedorDialog } from '@/components/proveedores/EditarProveedorDialog'
 import { cn } from '@/lib/utils'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -30,7 +34,7 @@ const fmt = new Intl.NumberFormat('es-MX', {
 const CATEGORIA_LABEL: Record<string, string> = {
   venue:       'Venue',
   catering:    'Catering',
-  floreria:    'Florería',
+  flores:    'Florería',
   fotografia:  'Fotografía',
   musica:      'Música',
   decoracion:  'Decoración',
@@ -77,13 +81,17 @@ interface Props {
 
 export default async function ProveedorPage({ params }: Props) {
   const { id } = await params
-  const proveedor = mockProveedores.find((p) => p.id === id)
+  const proveedor = await getProveedorById(id)
   if (!proveedor) notFound()
 
-  const odps = mockODPs.filter((o) => o.proveedorId === proveedor.id)
+  const [odps, allEventos] = await Promise.all([
+    getODPsByProveedor(proveedor.id),
+    getEventos(),
+  ])
+
   const historial = odps.map((o) => ({
     odp: o,
-    evento: mockEventos.find((e) => e.id === o.eventoId),
+    evento: allEventos.find((e) => e.id === o.eventoId),
   }))
 
   return (
@@ -115,10 +123,7 @@ export default async function ProveedorPage({ params }: Props) {
             </div>
           </div>
         </div>
-        <Button size="sm" variant="outline">
-          <Edit className="mr-1.5 h-4 w-4" />
-          Editar
-        </Button>
+        <EditarProveedorDialog proveedor={proveedor} />
       </div>
 
       {/* Content grid */}

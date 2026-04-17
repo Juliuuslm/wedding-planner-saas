@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Search, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ClienteCard } from '@/components/clientes/ClienteCard'
 import { NuevoClienteDialog } from '@/components/clientes/NuevoClienteDialog'
-import { mockClientes, mockEventos } from '@/data/mock'
-import type { EstadoCliente } from '@/types'
+import { getClientes } from '@/lib/api/clientes'
+import { getEventos } from '@/lib/api/eventos'
+import type { Cliente, Evento, EstadoCliente } from '@/types'
 import { cn } from '@/lib/utils'
 
 type Filtro = 'todos' | EstadoCliente
@@ -23,9 +24,18 @@ const FILTROS: { value: Filtro; label: string }[] = [
 export default function ClientesPage() {
   const [query, setQuery] = useState('')
   const [filtro, setFiltro] = useState<Filtro>('todos')
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [eventos, setEventos] = useState<Evento[]>([])
+
+  useEffect(() => {
+    void Promise.all([getClientes(), getEventos()]).then(([c, e]) => {
+      setClientes(c)
+      setEventos(e)
+    })
+  }, [])
 
   const clientesFiltrados = useMemo(() => {
-    return mockClientes.filter((c) => {
+    return clientes.filter((c) => {
       const matchesEstado = filtro === 'todos' || c.estado === filtro
       const q = query.toLowerCase()
       const matchesQuery =
@@ -35,7 +45,7 @@ export default function ClientesPage() {
         c.email.toLowerCase().includes(q)
       return matchesEstado && matchesQuery
     })
-  }, [query, filtro])
+  }, [clientes, query, filtro])
 
   return (
     <div className="space-y-6">
@@ -44,7 +54,7 @@ export default function ClientesPage() {
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Clientes</h1>
           <p className="text-sm text-text-muted">
-            {mockClientes.length} clientes en total
+            {clientes.length} clientes en total
           </p>
         </div>
         <NuevoClienteDialog />
@@ -83,7 +93,7 @@ export default function ClientesPage() {
       {clientesFiltrados.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {clientesFiltrados.map((cliente) => {
-            const evento = mockEventos.find((e) => e.clienteId === cliente.id)
+            const evento = eventos.find((e) => e.clienteId === cliente.id)
             return (
               <ClienteCard key={cliente.id} cliente={cliente} evento={evento} />
             )

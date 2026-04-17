@@ -26,7 +26,8 @@ interface DisenoTabProps {
 export function DisenoTab({ evento }: DisenoTabProps) {
   const [filtroCategoria, setFiltroCategoria] = useState<CategoriaAsset | 'Todos'>('Todos')
 
-  const assets = MOCK_ASSETS.filter((a) => a.eventoId === evento.id)
+  // Show all mock assets for any event (no design model in backend yet)
+  const assets = MOCK_ASSETS
   const filtrados = filtroCategoria === 'Todos'
     ? assets
     : assets.filter((a) => a.categoria === filtroCategoria)
@@ -65,11 +66,18 @@ export function DisenoTab({ evento }: DisenoTabProps) {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Button className="gap-2 bg-[#7D2AE8] text-white hover:bg-[#7D2AE8]/90">
+            <Button
+              className="gap-2 bg-[#7D2AE8] text-white hover:bg-[#7D2AE8]/90"
+              onClick={() => window.open('https://www.canva.com/', '_blank')}
+            >
               <ExternalLink className="h-4 w-4" />
               Abrir en Canva
             </Button>
-            <Button variant="outline" className="gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => window.open('https://www.canva.com/', '_blank')}
+            >
               <ChevronDown className="h-4 w-4" />
               Ver tableros guardados
             </Button>
@@ -99,7 +107,11 @@ export function DisenoTab({ evento }: DisenoTabProps) {
               {filtroCategoria !== 'Todos' && ` en ${filtroCategoria}`}
             </p>
           </div>
-          <Button size="sm" variant="outline">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => alert('Subida de assets próximamente')}
+          >
             <Upload className="mr-1.5 h-4 w-4" />
             Subir asset
           </Button>

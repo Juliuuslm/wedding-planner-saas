@@ -62,16 +62,19 @@ export interface Evento {
 // ============================================================
 
 export type CategoriaProveedor =
-  | 'floreria'
-  | 'fotografia'
-  | 'catering'
-  | 'musica'
-  | 'decoracion'
   | 'venue'
+  | 'catering'
+  | 'fotografia'
   | 'video'
-  | 'transporte'
-  | 'iluminacion'
+  | 'musica'
+  | 'flores'
+  | 'decoracion'
   | 'pasteleria'
+  | 'invitaciones'
+  | 'transporte'
+  | 'entretenimiento'
+  | 'iluminacion'
+  | 'mobiliario'
   | 'otro'
 
 export interface Proveedor {

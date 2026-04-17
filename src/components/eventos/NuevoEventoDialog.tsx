@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,10 +14,86 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { mockClientes, mockPaquetes } from '@/data/mock'
+import { createEvento } from '@/lib/api/eventos'
+import { getClientes } from '@/lib/api/clientes'
+import { getPaquetes } from '@/lib/api/paquetes'
+import type { Cliente, Paquete, TipoEvento } from '@/types'
+
+const TIPOS_EVENTO: { value: TipoEvento; label: string }[] = [
+  { value: 'boda',        label: 'Boda' },
+  { value: 'bautizo',     label: 'Bautizo' },
+  { value: 'quinceañera', label: 'Quinceañera' },
+  { value: 'corporativo', label: 'Corporativo' },
+  { value: 'otro',        label: 'Otro' },
+]
 
 export function NuevoEventoDialog() {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [paquetes, setPaquetes] = useState<Paquete[]>([])
+
+  const [nombre, setNombre] = useState('')
+  const [tipo, setTipo] = useState<TipoEvento>('boda')
+  const [clienteId, setClienteId] = useState('')
+  const [paqueteId, setPaqueteId] = useState('')
+  const [fecha, setFecha] = useState('')
+  const [venue, setVenue] = useState('')
+  const [numeroInvitados, setNumeroInvitados] = useState('')
+  const [presupuestoTotal, setPresupuestoTotal] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    void Promise.all([getClientes(), getPaquetes()]).then(([c, p]) => {
+      setClientes(c)
+      setPaquetes(p)
+    })
+  }, [open])
+
+  function resetForm() {
+    setNombre('')
+    setTipo('boda')
+    setClienteId('')
+    setPaqueteId('')
+    setFecha('')
+    setVenue('')
+    setNumeroInvitados('')
+    setPresupuestoTotal('')
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!nombre.trim() || !clienteId || !fecha) {
+      alert('Por favor completa nombre, cliente y fecha.')
+      return
+    }
+    setLoading(true)
+    try {
+      await createEvento({
+        nombre,
+        tipo,
+        fecha,
+        clienteId,
+        plannerId: 'planner-1',
+        venue: venue || undefined,
+        numeroInvitados: numeroInvitados ? Number(numeroInvitados) : undefined,
+        paqueteId: paqueteId || undefined,
+        estado: 'planificacion',
+        presupuestoTotal: presupuestoTotal ? Number(presupuestoTotal) : 0,
+        progreso: 0,
+      })
+      setOpen(false)
+      resetForm()
+      router.refresh()
+    } catch (err) {
+      console.error('Error al crear evento:', err)
+      alert('Error al crear el evento. Intenta de nuevo.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <>
@@ -25,7 +102,7 @@ export function NuevoEventoDialog() {
         Nuevo evento
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { if (!loading) { setOpen(v); if (!v) resetForm() } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nuevo evento</DialogTitle>
@@ -34,20 +111,43 @@ export function NuevoEventoDialog() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4">
+          <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="ev-nombre">Nombre del evento</Label>
-              <Input id="ev-nombre" placeholder="Boda López-García" />
+              <Input
+                id="ev-nombre"
+                placeholder="Boda López-García"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="ev-tipo">Tipo</Label>
+              <select
+                id="ev-tipo"
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as TipoEvento)}
+                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {TIPOS_EVENTO.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="ev-cliente">Cliente</Label>
               <select
                 id="ev-cliente"
+                value={clienteId}
+                onChange={(e) => setClienteId(e.target.value)}
+                required
                 className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <option value="">Seleccionar cliente...</option>
-                {mockClientes.map((c) => (
+                {clientes.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nombre} {c.apellido}
                   </option>
@@ -58,27 +158,57 @@ export function NuevoEventoDialog() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="ev-fecha">Fecha</Label>
-                <Input id="ev-fecha" type="date" />
+                <Input
+                  id="ev-fecha"
+                  type="date"
+                  value={fecha}
+                  onChange={(e) => setFecha(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ev-invitados">Invitados</Label>
-                <Input id="ev-invitados" type="number" placeholder="100" />
+                <Input
+                  id="ev-invitados"
+                  type="number"
+                  placeholder="100"
+                  value={numeroInvitados}
+                  onChange={(e) => setNumeroInvitados(e.target.value)}
+                />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="ev-venue">Venue</Label>
-              <Input id="ev-venue" placeholder="Hacienda San Carlos, Cuernavaca" />
+              <Input
+                id="ev-venue"
+                placeholder="Hacienda San Carlos, Cuernavaca"
+                value={venue}
+                onChange={(e) => setVenue(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="ev-presupuesto">Presupuesto total (MXN)</Label>
+              <Input
+                id="ev-presupuesto"
+                type="number"
+                placeholder="500000"
+                value={presupuestoTotal}
+                onChange={(e) => setPresupuestoTotal(e.target.value)}
+              />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="ev-paquete">Paquete</Label>
               <select
                 id="ev-paquete"
+                value={paqueteId}
+                onChange={(e) => setPaqueteId(e.target.value)}
                 className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <option value="">Seleccionar paquete...</option>
-                {mockPaquetes.map((p) => (
+                {paquetes.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.nombre} —{' '}
                     {new Intl.NumberFormat('es-MX', {
@@ -90,13 +220,13 @@ export function NuevoEventoDialog() {
                 ))}
               </select>
             </div>
-          </div>
 
-          <DialogFooter showCloseButton>
-            <Button size="sm" className="sm:ml-auto">
-              Crear evento
-            </Button>
-          </DialogFooter>
+            <DialogFooter showCloseButton>
+              <Button size="sm" type="submit" disabled={loading} className="sm:ml-auto">
+                {loading ? 'Creando...' : 'Crear evento'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>

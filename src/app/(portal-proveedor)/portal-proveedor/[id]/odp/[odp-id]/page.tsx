@@ -1,11 +1,16 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { mockProveedores, mockODPs, mockEventos } from '@/data/mock'
+import { ArrowLeft } from 'lucide-react'
+import { getProveedorById } from '@/lib/api/proveedores'
+import { getODPById } from '@/lib/api/odp'
+import { getEventoById } from '@/lib/api/eventos'
+import { getPlanner } from '@/lib/api/planner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { OdpActions } from './OdpActions'
 import type { ODP } from '@/types'
 
 const fmt = new Intl.NumberFormat('es-MX', {
@@ -21,13 +26,6 @@ const ESTADO_ODP_MAP: Record<ODP['estado'], { label: string; className: string }
   cancelada:  { label: 'Cancelada',  className: 'bg-danger/10 text-danger border-danger/30' },
 }
 
-const MOCK_PLANNER = {
-  nombre:  'Andrea Morales',
-  empresa: 'AM Wedding Studio',
-  email:   'andrea@amweddingstudio.mx',
-  telefono: '+52 55 1234 5678',
-}
-
 interface Props {
   params: Promise<{ id: string; 'odp-id': string }>
 }
@@ -35,19 +33,22 @@ interface Props {
 export default async function ODPDetailPage({ params }: Props) {
   const { id, 'odp-id': odpId } = await params
 
-  const proveedor = mockProveedores.find((p) => p.id === id)
+  const [proveedor, planner] = await Promise.all([
+    getProveedorById(id),
+    getPlanner(),
+  ])
   if (!proveedor) notFound()
 
-  const odp = mockODPs.find((o) => o.id === odpId)
+  const odp = await getODPById(odpId)
   if (!odp || odp.proveedorId !== id) notFound()
 
-  const evento = mockEventos.find((e) => e.id === odp.eventoId)
+  const evento = await getEventoById(odp.eventoId)
   const estado = ESTADO_ODP_MAP[odp.estado]
 
   const MOCK_MENSAJES = [
     {
       id: 1,
-      autor: MOCK_PLANNER.nombre,
+      autor: planner.nombre,
       tipo: 'planner' as const,
       mensaje: 'Hola, adjunto la ODP con los requerimientos del evento. Por favor confírmame disponibilidad.',
       fecha: '2026-04-10T10:30:00.000Z',
@@ -61,7 +62,7 @@ export default async function ODPDetailPage({ params }: Props) {
     },
     {
       id: 3,
-      autor: MOCK_PLANNER.nombre,
+      autor: planner.nombre,
       tipo: 'planner' as const,
       mensaje: 'Perfecto. Estaremos confirmando el pago del anticipo en los próximos días.',
       fecha: '2026-04-11T14:00:00.000Z',
@@ -206,10 +207,10 @@ export default async function ODPDetailPage({ params }: Props) {
               <CardTitle className="text-sm font-semibold">Planner de contacto</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
-              <p className="font-medium text-text-primary">{MOCK_PLANNER.nombre}</p>
-              <p className="text-text-muted">{MOCK_PLANNER.empresa}</p>
-              <p className="text-text-secondary pt-1">{MOCK_PLANNER.email}</p>
-              <p className="text-text-secondary">{MOCK_PLANNER.telefono}</p>
+              <p className="font-medium text-text-primary">{planner.nombre}</p>
+              <p className="text-text-muted">{planner.empresa}</p>
+              <p className="text-text-secondary pt-1">{planner.email}</p>
+              <p className="text-text-secondary">{planner.telefono}</p>
             </CardContent>
           </Card>
 
@@ -219,33 +220,7 @@ export default async function ODPDetailPage({ params }: Props) {
               <CardTitle className="text-sm font-semibold">Acciones</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {odp.estado === 'pendiente' && (
-                <>
-                  <Button size="sm" className="w-full bg-success text-white hover:bg-success/90">
-                    Confirmar ODP
-                  </Button>
-                  <Button size="sm" variant="outline" className="w-full">
-                    Solicitar cambios
-                  </Button>
-                </>
-              )}
-              {odp.estado === 'confirmada' && (
-                <Button size="sm" variant="outline" className="w-full" disabled>
-                  <CheckCircle2 className="mr-1.5 h-4 w-4 text-success" />
-                  ODP Confirmada
-                </Button>
-              )}
-              {odp.estado === 'completada' && (
-                <div className="flex items-center justify-center gap-2 rounded-md bg-muted/40 py-2 text-sm text-text-muted">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Servicio completado
-                </div>
-              )}
-              {odp.estado === 'cancelada' && (
-                <div className="flex items-center justify-center rounded-md bg-danger/10 py-2 text-sm text-danger">
-                  ODP cancelada
-                </div>
-              )}
+              <OdpActions odp={odp} />
             </CardContent>
           </Card>
         </div>

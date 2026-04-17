@@ -80,7 +80,32 @@ export function PresupuestoTab({
 
       {/* ── Acciones ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-4">
-        <Button size="sm" variant="outline">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            if (lineas.length === 0) {
+              alert('No hay conceptos para exportar.')
+              return
+            }
+            const headers = ['Concepto', 'Estimado', 'Real', 'Pagado', 'Estado']
+            const rows = lineas.map((l) => [
+              l.concepto,
+              l.montoEstimado,
+              l.montoReal ?? '',
+              l.montoPagado,
+              l.estado,
+            ])
+            const csv = [headers, ...rows].map((r) => r.join(',')).join('\n')
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `presupuesto-${evento.id}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+          }}
+        >
           <Download className="mr-1.5 h-4 w-4" />
           Exportar a Excel
         </Button>
@@ -94,7 +119,12 @@ export function PresupuestoTab({
             <p className="text-sm font-medium text-text-primary">Referencia de diseño</p>
             <p className="text-xs text-text-muted">Vincula tu tablero de Canva</p>
           </div>
-          <Button size="sm" variant="ghost" className="ml-2 shrink-0 text-text-secondary">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-2 shrink-0 text-text-secondary"
+            onClick={() => window.open('https://www.canva.com/', '_blank')}
+          >
             <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
             Abrir en Canva
           </Button>

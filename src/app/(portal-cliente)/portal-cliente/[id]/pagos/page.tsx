@@ -1,6 +1,10 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation'
 import { CheckCircle2, Clock, AlertCircle } from 'lucide-react'
-import { mockEventos, mockPaquetes, mockContratos } from '@/data/mock'
+import { getEventoById } from '@/lib/api/eventos'
+import { getPaqueteById } from '@/lib/api/paquetes'
+import { getContratosByEvento } from '@/lib/api/contratos'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -22,22 +26,23 @@ const fmtDate = (iso: string) =>
 
 export default async function PortalClientePagosPage({ params }: Props) {
   const { id } = await params
-  const evento  = mockEventos.find((e) => e.id === id)
+  const evento = await getEventoById(id)
   if (!evento) notFound()
 
-  const paquete = mockPaquetes.find((p) => p.id === evento.paqueteId)
+  const paquete = evento.paqueteId
+    ? await getPaqueteById(evento.paqueteId)
+    : null
 
   // Get the client contract for this event
-  const contrato = mockContratos.find(
-    (c) => c.eventoId === id && c.tipo === 'cliente',
-  )
+  const contratos = await getContratosByEvento(id)
+  const contrato = contratos.find((c) => c.tipo === 'cliente') ?? null
 
   const montoTotal = contrato?.montoTotal ?? paquete?.precio ?? 0
   const anticipo   = montoTotal / 2
   const liquidacion = montoTotal / 2
 
-  // Determine if anticipo is paid (contract is signed → anticipo is paid)
-  const anticipoPagado = contrato?.estado === 'firmado' || contrato?.estado === 'enviado'
+  // Determine if anticipo is paid (contract must be signed)
+  const anticipoPagado = contrato?.estado === 'firmado'
   const totalPagado    = anticipoPagado ? anticipo : 0
   const saldoPendiente = montoTotal - totalPagado
 

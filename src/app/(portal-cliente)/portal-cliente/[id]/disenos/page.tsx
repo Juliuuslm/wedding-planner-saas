@@ -1,13 +1,15 @@
+'use client'
+
+import { useState, use } from 'react'
 import { notFound } from 'next/navigation'
 import { CheckCircle2, Clock, Eye } from 'lucide-react'
-import { mockEventos } from '@/data/mock'
 import { cn } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ id: string }>
 }
 
-type EstadoDiseno = 'aprobado' | 'en_revision' | 'por_revisar'
+type EstadoDiseno = 'aprobado' | 'en_revision' | 'por_revisar' | 'rechazado'
 
 interface Diseno {
   id:        number
@@ -21,41 +23,42 @@ const ESTADO_DISENO: Record<EstadoDiseno, { label: string; className: string }> 
   aprobado:    { label: 'Aprobado',    className: 'bg-success/10 text-success' },
   en_revision: { label: 'En revisión', className: 'bg-warning/10 text-warning' },
   por_revisar: { label: 'Por revisar', className: 'bg-brand/10 text-brand' },
+  rechazado:   { label: 'Rechazado',   className: 'bg-danger/10 text-danger' },
 }
 
-// For evento-1 (Boda García-Rodríguez) — Garden chic palette
-const DISENOS_EVENTO_1: Diseno[] = [
+// Placeholder designs — no design model in backend (MVP)
+const DISENOS_BASE: Diseno[] = [
   {
     id:        1,
-    titulo:    'Concepto general — Garden Chic',
+    titulo:    'Concepto general',
     categoria: 'Concepto',
-    estado:    'aprobado',
-    gradient:  'from-[#2D4A3E] to-[#1A2E26]',
+    estado:    'en_revision',
+    gradient:  'from-[#1A1A2E] to-[#2C1810]',
   },
   {
     id:        2,
     titulo:    'Paleta de colores',
     categoria: 'Identidad',
-    estado:    'aprobado',
+    estado:    'en_revision',
     gradient:  'from-[#C9A96E] to-[#8B6B3D]',
   },
   {
     id:        3,
     titulo:    'Diseño de invitaciones',
     categoria: 'Papelería',
-    estado:    'en_revision',
+    estado:    'por_revisar',
     gradient:  'from-[#D4C5B0] to-[#A89070]',
   },
   {
     id:        4,
-    titulo:    'Centro de mesa principal',
+    titulo:    'Centro de mesa',
     categoria: 'Florería',
     estado:    'por_revisar',
     gradient:  'from-[#8FAF8A] to-[#4A7045]',
   },
   {
     id:        5,
-    titulo:    'Diseño del altar floral',
+    titulo:    'Diseño del altar',
     categoria: 'Florería',
     estado:    'por_revisar',
     gradient:  'from-[#B5C5B0] to-[#6A8A65]',
@@ -69,30 +72,24 @@ const DISENOS_EVENTO_1: Diseno[] = [
   },
 ]
 
-// Generic designs for other events
-const DISENOS_GENERIC: Diseno[] = [
-  {
-    id:        1,
-    titulo:    'Concepto general',
-    categoria: 'Concepto',
-    estado:    'en_revision',
-    gradient:  'from-[#1A1A2E] to-[#2C1810]',
-  },
-  {
-    id:        2,
-    titulo:    'Propuesta de colores',
-    categoria: 'Identidad',
-    estado:    'por_revisar',
-    gradient:  'from-[#C9A96E] to-[#8B6B3D]',
-  },
-]
+export default function PortalClienteDisenos({ params }: Props) {
+  // use() unwraps the Promise in client components (React 19)
+  const { id } = use(params)
+  if (!id) notFound()
 
-export default async function PortalClienteDisenos({ params }: Props) {
-  const { id } = await params
-  const evento  = mockEventos.find((e) => e.id === id)
-  if (!evento) notFound()
+  const [disenos, setDisenos] = useState<Diseno[]>(DISENOS_BASE)
 
-  const disenos = id === 'evento-1' ? DISENOS_EVENTO_1 : DISENOS_GENERIC
+  function handleAprobar(disenoId: number) {
+    setDisenos((prev) =>
+      prev.map((d) => (d.id === disenoId ? { ...d, estado: 'aprobado' } : d)),
+    )
+  }
+
+  function handleRechazar(disenoId: number) {
+    setDisenos((prev) =>
+      prev.map((d) => (d.id === disenoId ? { ...d, estado: 'rechazado' } : d)),
+    )
+  }
 
   const aprobados  = disenos.filter((d) => d.estado === 'aprobado').length
   const porRevisar = disenos.filter((d) => d.estado === 'por_revisar').length
@@ -128,6 +125,7 @@ export default async function PortalClienteDisenos({ params }: Props) {
         <div className="grid gap-4 sm:grid-cols-2">
           {disenos.map((diseno) => {
             const estadoInfo = ESTADO_DISENO[diseno.estado]
+            const canAct = diseno.estado === 'por_revisar' || diseno.estado === 'en_revision'
             return (
               <div
                 key={diseno.id}
@@ -140,7 +138,6 @@ export default async function PortalClienteDisenos({ params }: Props) {
                     diseno.gradient,
                   )}
                 >
-                  {/* Subtle texture overlay */}
                   <div
                     className="absolute inset-0 opacity-10"
                     style={{
@@ -172,6 +169,24 @@ export default async function PortalClienteDisenos({ params }: Props) {
                       {estadoInfo.label}
                     </span>
                   </div>
+
+                  {/* Approve / Reject buttons — local state only (no design model in backend) */}
+                  {canAct && (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => handleAprobar(diseno.id)}
+                        className="rounded-md bg-success/10 px-3 py-1.5 text-xs font-medium text-success transition-colors hover:bg-success/20"
+                      >
+                        Aprobar
+                      </button>
+                      <button
+                        onClick={() => handleRechazar(diseno.id)}
+                        className="rounded-md bg-danger/10 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/20"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )

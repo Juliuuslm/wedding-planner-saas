@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, FileText } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { VistaContrato } from './VistaContrato'
+import { NuevoContratoDialog } from './NuevoContratoDialog'
 import type { Contrato, Evento, Cliente, Paquete, EstadoContrato } from '@/types'
 
 const fmt = (n: number) =>
@@ -105,10 +106,7 @@ export function ContratosTab({ evento, contratos, cliente, paquete }: ContratosT
             )}
           </p>
         </div>
-        <Button size="sm" variant="outline">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Nuevo contrato
-        </Button>
+        <NuevoContratoDialog eventoId={evento.id} />
       </div>
 
       {/* Contracts list */}

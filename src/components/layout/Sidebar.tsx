@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LogOut, User, Settings as SettingsIcon } from 'lucide-react'
@@ -12,8 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { NAV_ITEMS, NAV_BOTTOM, type NavItem } from '@/lib/nav-config'
-import { mockPlanner } from '@/data/mock'
+import { getPlanner } from '@/lib/api/planner'
 import { cn } from '@/lib/utils'
+import type { Planner } from '@/types'
 
 // ─── Internal nav item ────────────────────────────────────────────────────────
 
@@ -40,11 +42,18 @@ function NavItemRow({ item, activeSegment }: { item: NavItem; activeSegment: str
 // ─── Shared content (used in desktop sidebar and mobile Sheet) ────────────────
 
 export function SidebarContent({ activeSegment }: { activeSegment: string }) {
-  const initials = mockPlanner.nombre
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
+  const [planner, setPlanner] = useState<Planner | null>(null)
+
+  useEffect(() => {
+    void getPlanner().then(setPlanner).catch(console.error)
+  }, [])
+
+  const initials = planner
+    ? planner.nombre.split(' ').map((n) => n[0]).join('').slice(0, 2)
+    : '??'
+
+  const empresa = planner?.empresa ?? 'Wedding Studio'
+  const nombre = planner?.nombre ?? ''
 
   return (
     <div className="flex h-full flex-col">
@@ -55,7 +64,7 @@ export function SidebarContent({ activeSegment }: { activeSegment: string }) {
         </div>
         <div>
           <p className="text-sm font-semibold text-white">Wedding Studio</p>
-          <p className="text-xs text-white/40">{mockPlanner.empresa}</p>
+          <p className="text-xs text-white/40">{empresa}</p>
         </div>
       </div>
 
@@ -83,8 +92,8 @@ export function SidebarContent({ activeSegment }: { activeSegment: string }) {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-medium text-white">{mockPlanner.nombre}</p>
-              <p className="truncate text-xs text-white/40">{mockPlanner.empresa}</p>
+              <p className="truncate text-sm font-medium text-white">{nombre}</p>
+              <p className="truncate text-xs text-white/40">{empresa}</p>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-52">

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   User, Building2, Package, Users, Bell,
-  Upload, Plus, Pencil, Trash2, Mail, Phone,
+  Upload, Plus, Pencil, Trash2, Mail,
 } from 'lucide-react'
-import { mockPlanner, mockPaquetes } from '@/data/mock'
+import { getPlanner, updatePlanner } from '@/lib/api/planner'
+import { getPaquetes, createPaquete, updatePaquete, deletePaquete } from '@/lib/api/paquetes'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -21,7 +22,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import type { Paquete } from '@/types'
+import type { Planner, Paquete } from '@/types'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -103,7 +104,39 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 
 // ── Tab: Mi perfil ─────────────────────────────────────────────────────────────
 
-function TabPerfil() {
+function TabPerfil({ planner, onUpdate }: { planner: Planner | null; onUpdate: (p: Planner) => void }) {
+  const [nombre,     setNombre]     = useState(planner?.nombre     ?? '')
+  const [email,      setEmail]      = useState(planner?.email      ?? '')
+  const [telefono,   setTelefono]   = useState(planner?.telefono   ?? '')
+  const [zonaHoraria, setZonaHoraria] = useState(planner?.zonaHoraria ?? '')
+  const [saving,     setSaving]     = useState(false)
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  if (!planner) return null
+
+  const initials = nombre.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'AM'
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const updated = await updatePlanner({ nombre, email, telefono, zonaHoraria })
+      onUpdate(updated)
+      alert('Perfil guardado correctamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    console.log('[Perfil] Foto seleccionada:', file.name)
+    const reader = new FileReader()
+    reader.onload = (ev) => setFotoPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -113,12 +146,14 @@ function TabPerfil() {
         <CardContent>
           <div className="flex items-center gap-5">
             <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-brand text-lg font-semibold text-gold">
-                AM
-              </AvatarFallback>
+              {fotoPreview
+                ? <img src={fotoPreview} alt="preview" className="h-16 w-16 rounded-full object-cover" />
+                : <AvatarFallback className="bg-brand text-lg font-semibold text-gold">{initials}</AvatarFallback>
+              }
             </Avatar>
             <div className="space-y-1.5">
-              <Button size="sm" variant="outline">
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
                 <Upload className="mr-1.5 h-4 w-4" />
                 Subir foto
               </Button>
@@ -134,26 +169,26 @@ function TabPerfil() {
         </CardHeader>
         <CardContent className="space-y-4">
           <FieldRow label="Nombre completo">
-            <Input defaultValue={mockPlanner.nombre} />
+            <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
           </FieldRow>
           <FieldRow label="Email">
-            <Input type="email" defaultValue={mockPlanner.email} />
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </FieldRow>
           <FieldRow label="Teléfono">
-            <Input type="tel" defaultValue={mockPlanner.telefono} />
+            <Input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
           </FieldRow>
           <FieldRow label="WhatsApp">
-            <Input type="tel" defaultValue={mockPlanner.telefono} placeholder="+52 55 0000 0000" />
+            <Input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+52 55 0000 0000" />
           </FieldRow>
           <FieldRow label="Zona horaria">
-            <Input defaultValue={mockPlanner.zonaHoraria} />
+            <Input value={zonaHoraria} onChange={(e) => setZonaHoraria(e.target.value)} />
           </FieldRow>
         </CardContent>
       </Card>
 
       <div className="flex justify-end">
-        <Button size="sm" className="bg-brand text-gold hover:bg-brand/90">
-          Guardar cambios
+        <Button size="sm" className="bg-brand text-gold hover:bg-brand/90" onClick={handleSave} disabled={saving}>
+          {saving ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </div>
     </div>
@@ -162,7 +197,35 @@ function TabPerfil() {
 
 // ── Tab: Mi empresa ────────────────────────────────────────────────────────────
 
-function TabEmpresa() {
+function TabEmpresa({ planner, onUpdate }: { planner: Planner | null; onUpdate: (p: Planner) => void }) {
+  const [empresa,   setEmpresa]   = useState(planner?.empresa   ?? '')
+  const [moneda,    setMoneda]    = useState(planner?.moneda     ?? 'MXN')
+  const [saving,    setSaving]    = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const logoRef = useRef<HTMLInputElement>(null)
+
+  if (!planner) return null
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const updated = await updatePlanner({ empresa, moneda })
+      onUpdate(updated)
+      alert('Empresa guardada correctamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    console.log('[Empresa] Logo seleccionado:', file.name)
+    const reader = new FileReader()
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -171,11 +234,15 @@ function TabEmpresa() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-dashed border-warm-border bg-muted/40">
-              <span className="text-xl font-bold text-brand">AM</span>
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-dashed border-warm-border bg-muted/40 overflow-hidden">
+              {logoPreview
+                ? <img src={logoPreview} alt="logo preview" className="h-full w-full object-contain" />
+                : <span className="text-xl font-bold text-brand">AM</span>
+              }
             </div>
             <div className="space-y-1.5">
-              <Button size="sm" variant="outline">
+              <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+              <Button size="sm" variant="outline" onClick={() => logoRef.current?.click()}>
                 <Upload className="mr-1.5 h-4 w-4" />
                 Subir logo
               </Button>
@@ -191,7 +258,7 @@ function TabEmpresa() {
         </CardHeader>
         <CardContent className="space-y-4">
           <FieldRow label="Nombre comercial">
-            <Input defaultValue={mockPlanner.empresa} />
+            <Input value={empresa} onChange={(e) => setEmpresa(e.target.value)} />
           </FieldRow>
           <FieldRow label="Descripción">
             <Textarea
@@ -200,6 +267,9 @@ function TabEmpresa() {
               className="resize-none"
             />
           </FieldRow>
+          <FieldRow label="Moneda">
+            <Input value={moneda} onChange={(e) => setMoneda(e.target.value)} placeholder="MXN" />
+          </FieldRow>
           <FieldRow label="Sitio web">
             <Input defaultValue="https://amweddingstudio.mx" placeholder="https://..." />
           </FieldRow>
@@ -207,7 +277,7 @@ function TabEmpresa() {
             <Input defaultValue="Polanco, Ciudad de México, México" />
           </FieldRow>
           <FieldRow label="Email de contacto">
-            <Input type="email" defaultValue={mockPlanner.email} />
+            <Input type="email" defaultValue={planner.email} />
           </FieldRow>
         </CardContent>
       </Card>
@@ -250,8 +320,8 @@ function TabEmpresa() {
       </Card>
 
       <div className="flex justify-end">
-        <Button size="sm" className="bg-brand text-gold hover:bg-brand/90">
-          Guardar cambios
+        <Button size="sm" className="bg-brand text-gold hover:bg-brand/90" onClick={handleSave} disabled={saving}>
+          {saving ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </div>
     </div>
@@ -264,17 +334,45 @@ function DialogPaquete({
   open,
   paquete,
   onClose,
+  onSaved,
 }: {
   open:     boolean
   paquete:  Paquete | null
   onClose:  () => void
+  onSaved:  (p: Paquete) => void
 }) {
-  const [servicios, setServicios] = useState<string[]>(paquete?.servicios ?? [])
+  const [nombre,      setNombre]      = useState(paquete?.nombre      ?? '')
+  const [precio,      setPrecio]      = useState(paquete?.precio?.toString() ?? '')
+  const [descripcion, setDescripcion] = useState(paquete?.descripcion ?? '')
+  const [servicios,   setServicios]   = useState<string[]>(paquete?.servicios ?? [])
+  const [saving,      setSaving]      = useState(false)
+
+  // reset when switching between new/edit
+  useEffect(() => {
+    setNombre(paquete?.nombre ?? '')
+    setPrecio(paquete?.precio?.toString() ?? '')
+    setDescripcion(paquete?.descripcion ?? '')
+    setServicios(paquete?.servicios ?? [])
+  }, [paquete, open])
 
   function toggleServicio(s: string) {
     setServicios((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
     )
+  }
+
+  async function handleSubmit() {
+    setSaving(true)
+    try {
+      const data = { nombre, precio: Number(precio), descripcion, servicios, activo: paquete?.activo ?? true }
+      const saved = paquete
+        ? await updatePaquete(paquete.id, data)
+        : await createPaquete(data)
+      onSaved(saved)
+      onClose()
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -286,16 +384,17 @@ function DialogPaquete({
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Nombre del paquete</Label>
-            <Input defaultValue={paquete?.nombre} placeholder="ej. Premium, Esencial…" />
+            <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="ej. Premium, Esencial…" />
           </div>
           <div className="space-y-1.5">
             <Label>Precio (MXN)</Label>
-            <Input type="number" defaultValue={paquete?.precio} placeholder="85000" />
+            <Input type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} placeholder="85000" />
           </div>
           <div className="space-y-1.5">
             <Label>Descripción</Label>
             <Textarea
-              defaultValue={paquete?.descripcion}
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Descripción breve del paquete…"
               rows={2}
               className="resize-none"
@@ -317,8 +416,8 @@ function DialogPaquete({
           </div>
         </div>
         <DialogFooter showCloseButton>
-          <Button size="sm" className="bg-brand text-gold hover:bg-brand/90">
-            {paquete ? 'Guardar cambios' : 'Crear paquete'}
+          <Button size="sm" className="bg-brand text-gold hover:bg-brand/90" onClick={handleSubmit} disabled={saving}>
+            {saving ? 'Guardando…' : paquete ? 'Guardar cambios' : 'Crear paquete'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -326,20 +425,25 @@ function DialogPaquete({
   )
 }
 
-function TabPaquetes() {
-  const [paquetes, setPaquetes] = useState(
-    mockPaquetes.map((p) => ({ ...p, activo: p.activo })),
-  )
+function TabPaquetes({ initialPaquetes }: { initialPaquetes: Paquete[] }) {
+  const [paquetes, setPaquetes] = useState(initialPaquetes)
   const [dialogOpen,     setDialogOpen]     = useState(false)
   const [paqueteEditing, setPaqueteEditing] = useState<Paquete | null>(null)
 
   const fmt = (n: number) =>
     new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n)
 
-  function toggleActivo(id: string) {
-    setPaquetes((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, activo: !p.activo } : p)),
-    )
+  async function toggleActivo(id: string) {
+    const p = paquetes.find((x) => x.id === id)
+    if (!p) return
+    const updated = await updatePaquete(id, { activo: !p.activo })
+    setPaquetes((prev) => prev.map((x) => (x.id === id ? updated : x)))
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('¿Eliminar este paquete?')) return
+    await deletePaquete(id)
+    setPaquetes((prev) => prev.filter((x) => x.id !== id))
   }
 
   function openNuevo() {
@@ -350,6 +454,13 @@ function TabPaquetes() {
   function openEditar(p: Paquete) {
     setPaqueteEditing(p)
     setDialogOpen(true)
+  }
+
+  function handleSaved(saved: Paquete) {
+    setPaquetes((prev) => {
+      const exists = prev.some((x) => x.id === saved.id)
+      return exists ? prev.map((x) => (x.id === saved.id ? saved : x)) : [...prev, saved]
+    })
   }
 
   return (
@@ -389,6 +500,9 @@ function TabPaquetes() {
                   <Button size="icon-sm" variant="ghost" onClick={() => openEditar(p)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
+                  <Button size="icon-sm" variant="ghost" className="text-text-muted hover:text-danger" onClick={() => handleDelete(p.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
 
@@ -413,6 +527,7 @@ function TabPaquetes() {
         open={dialogOpen}
         paquete={paqueteEditing}
         onClose={() => setDialogOpen(false)}
+        onSaved={handleSaved}
       />
     </div>
   )
@@ -423,11 +538,21 @@ function TabPaquetes() {
 function DialogInvitar({
   open,
   onClose,
+  onInvite,
 }: {
-  open:    boolean
-  onClose: () => void
+  open:     boolean
+  onClose:  () => void
+  onInvite: (email: string, rol: Rol) => void
 }) {
-  const [rol, setRol] = useState<Rol>('Asistente')
+  const [email, setEmail] = useState('')
+  const [rol,   setRol]   = useState<Rol>('Asistente')
+
+  function handleSubmit() {
+    if (!email.trim()) return
+    onInvite(email.trim(), rol)
+    setEmail('')
+    onClose()
+  }
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -438,7 +563,12 @@ function DialogInvitar({
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Correo electrónico</Label>
-            <Input type="email" placeholder="nombre@ejemplo.com" />
+            <Input
+              type="email"
+              placeholder="nombre@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Rol</Label>
@@ -461,8 +591,8 @@ function DialogInvitar({
           </div>
         </div>
         <DialogFooter showCloseButton>
-          <Button size="sm" className="bg-brand text-gold hover:bg-brand/90">
-            Enviar invitación
+          <Button size="sm" className="bg-brand text-gold hover:bg-brand/90" onClick={handleSubmit}>
+            Invitar
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -477,14 +607,32 @@ const ROL_COLOR: Record<Rol, string> = {
   Logística:   'bg-warning/10 text-warning border-warning/30',
 }
 
+// MVP: equipo fijo, multi-user en v2
 function TabEquipo() {
-  const [equipo,       setEquipo]       = useState<MiembroEquipo[]>(EQUIPO_INICIAL)
-  const [inviteOpen,   setInviteOpen]   = useState(false)
+  const [equipo,     setEquipo]     = useState<MiembroEquipo[]>(EQUIPO_INICIAL)
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   function toggleActivo(id: string) {
     setEquipo((prev) =>
       prev.map((m) => (m.id === id ? { ...m, activo: !m.activo } : m)),
     )
+  }
+
+  function handleDelete(id: string) {
+    setEquipo((prev) => prev.filter((m) => m.id !== id))
+  }
+
+  function handleInvite(email: string, rol: Rol) {
+    const initials = email.slice(0, 2).toUpperCase()
+    const nuevo: MiembroEquipo = {
+      id:       `m-${Date.now()}`,
+      nombre:   email,
+      email,
+      rol,
+      activo:   true,
+      initials,
+    }
+    setEquipo((prev) => [...prev, nuevo])
   }
 
   return (
@@ -532,7 +680,12 @@ function TabEquipo() {
                   onCheckedChange={() => toggleActivo(m.id)}
                   size="sm"
                 />
-                <Button size="icon-sm" variant="ghost" className="text-text-muted hover:text-danger">
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  className="text-text-muted hover:text-danger"
+                  onClick={() => handleDelete(m.id)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -541,7 +694,7 @@ function TabEquipo() {
         </CardContent>
       </Card>
 
-      <DialogInvitar open={inviteOpen} onClose={() => setInviteOpen(false)} />
+      <DialogInvitar open={inviteOpen} onClose={() => setInviteOpen(false)} onInvite={handleInvite} />
     </div>
   )
 }
@@ -615,7 +768,11 @@ function TabNotificaciones() {
       </div>
 
       <div className="flex justify-end">
-        <Button size="sm" className="bg-brand text-gold hover:bg-brand/90">
+        <Button
+          size="sm"
+          className="bg-brand text-gold hover:bg-brand/90"
+          onClick={() => alert('Preferencias guardadas localmente.')}
+        >
           Guardar preferencias
         </Button>
       </div>
@@ -634,6 +791,16 @@ const TABS = [
 ]
 
 export default function ConfiguracionPage() {
+  const [planner, setPlanner] = useState<Planner | null>(null)
+  const [paquetes, setPaquetes] = useState<Paquete[]>([])
+
+  useEffect(() => {
+    void Promise.all([getPlanner(), getPaquetes()]).then(([p, paq]) => {
+      setPlanner(p)
+      setPaquetes(paq)
+    })
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -652,9 +819,9 @@ export default function ConfiguracionPage() {
           ))}
         </TabsList>
 
-        <TabsContent value="perfil"         className="mt-6"><TabPerfil /></TabsContent>
-        <TabsContent value="empresa"        className="mt-6"><TabEmpresa /></TabsContent>
-        <TabsContent value="paquetes"       className="mt-6"><TabPaquetes /></TabsContent>
+        <TabsContent value="perfil"         className="mt-6"><TabPerfil planner={planner} onUpdate={setPlanner} /></TabsContent>
+        <TabsContent value="empresa"        className="mt-6"><TabEmpresa planner={planner} onUpdate={setPlanner} /></TabsContent>
+        <TabsContent value="paquetes"       className="mt-6"><TabPaquetes initialPaquetes={paquetes} /></TabsContent>
         <TabsContent value="equipo"         className="mt-6"><TabEquipo /></TabsContent>
         <TabsContent value="notificaciones" className="mt-6"><TabNotificaciones /></TabsContent>
       </Tabs>

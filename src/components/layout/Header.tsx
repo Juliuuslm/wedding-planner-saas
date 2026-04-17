@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Menu, Bell, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -21,7 +22,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useNavigation } from '@/hooks/useNavigation'
-import { mockPlanner } from '@/data/mock'
+import { getPlanner } from '@/lib/api/planner'
+import type { Planner } from '@/types'
 
 interface HeaderProps {
   onOpenSidebar: () => void
@@ -29,12 +31,17 @@ interface HeaderProps {
 
 export function Header({ onOpenSidebar }: HeaderProps) {
   const { breadcrumbs, contextualAction } = useNavigation()
+  const [planner, setPlanner] = useState<Planner | null>(null)
 
-  const initials = mockPlanner.nombre
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2)
+  useEffect(() => {
+    void getPlanner().then(setPlanner).catch(console.error)
+  }, [])
+
+  const initials = planner
+    ? planner.nombre.split(' ').map((n) => n[0]).join('').slice(0, 2)
+    : '??'
+
+  const firstName = planner ? planner.nombre.split(' ')[0] : ''
 
   return (
     <header className="flex h-14 items-center gap-4 border-b border-warm-border bg-background px-6">
@@ -100,7 +107,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
             </AvatarFallback>
           </Avatar>
           <span className="hidden text-sm font-medium sm:block">
-            {mockPlanner.nombre.split(' ')[0]}
+            {firstName}
           </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">

@@ -1,7 +1,11 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CalendarDays } from 'lucide-react'
-import { mockProveedores, mockODPs, mockEventos } from '@/data/mock'
+import { getProveedorById } from '@/lib/api/proveedores'
+import { getODPsByProveedor } from '@/lib/api/odp'
+import { getEventos } from '@/lib/api/eventos'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,10 +31,14 @@ interface Props {
 
 export default async function PortalProveedorPage({ params }: Props) {
   const { id } = await params
-  const proveedor = mockProveedores.find((p) => p.id === id)
+  const proveedor = await getProveedorById(id)
   if (!proveedor) notFound()
 
-  const odps = mockODPs.filter((o) => o.proveedorId === id)
+  const [odps, allEventos] = await Promise.all([
+    getODPsByProveedor(id),
+    getEventos(),
+  ])
+
   const firstName = proveedor.nombre.split(' ')[0]
 
   const totalMonto        = odps.reduce((s, o) => s + o.monto, 0)
@@ -39,7 +47,7 @@ export default async function PortalProveedorPage({ params }: Props) {
   const montoPendiente    = odps.filter((o) => o.estado === 'pendiente').reduce((s, o) => s + o.monto, 0)
 
   function getEvento(eventoId: string) {
-    return mockEventos.find((e) => e.id === eventoId)
+    return allEventos.find((e) => e.id === eventoId)
   }
 
   return (
