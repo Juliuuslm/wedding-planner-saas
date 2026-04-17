@@ -1,4 +1,12 @@
 // ============================================================
+// Tipos de dominio (shape de lo que ve el frontend)
+//
+// Alineados con prisma/schema.prisma tras la migración a Prisma.
+// Los campos opcionales usan `| null` (no solo `?:`) porque eso es lo
+// que Prisma devuelve. Dates se serializan a string ISO vía JSON.
+// ============================================================
+
+// ============================================================
 // PLANNER
 // ============================================================
 
@@ -8,7 +16,7 @@ export interface Planner {
   empresa: string
   email: string
   telefono: string
-  logo?: string
+  logo?: string | null
   moneda: string
   zonaHoraria: string
   creadoEn: string
@@ -22,12 +30,13 @@ export type EstadoCliente = 'prospecto' | 'activo' | 'completado' | 'cancelado'
 
 export interface Cliente {
   id: string
+  plannerId?: string
   nombre: string
   apellido: string
   email: string
   telefono: string
   estado: EstadoCliente
-  notas?: string
+  notas?: string | null
   creadoEn: string
   actualizadoEn: string
 }
@@ -36,7 +45,8 @@ export interface Cliente {
 // EVENTOS
 // ============================================================
 
-export type TipoEvento = 'boda' | 'bautizo' | 'quinceañera' | 'corporativo' | 'otro'
+// Nota: enum Prisma usa `quinceanera` (sin ñ, ASCII) por portabilidad.
+export type TipoEvento = 'boda' | 'bautizo' | 'quinceanera' | 'corporativo' | 'otro'
 export type EstadoEvento = 'planificacion' | 'activo' | 'completado' | 'cancelado'
 
 export interface Evento {
@@ -46,13 +56,13 @@ export interface Evento {
   fecha: string // ISO 8601
   clienteId: string
   plannerId: string
-  venue?: string
-  numeroInvitados?: number
-  paqueteId?: string
+  venue?: string | null
+  numeroInvitados?: number | null
+  paqueteId?: string | null
   estado: EstadoEvento
   presupuestoTotal: number
   progreso: number // 0-100
-  notas?: string
+  notas?: string | null
   creadoEn: string
   actualizadoEn: string
 }
@@ -79,21 +89,22 @@ export type CategoriaProveedor =
 
 export interface Proveedor {
   id: string
+  plannerId?: string
   nombre: string
   categoria: CategoriaProveedor
-  contacto?: string        // nombre de la persona de contacto
+  contacto?: string | null
   email: string
   telefono: string
-  whatsapp?: string
-  sitioWeb?: string
-  descripcion?: string     // descripción breve del servicio
-  servicios?: string[]     // lista de servicios que ofrece
-  precioBase?: number
-  precioMin?: number       // rango mínimo de precio
-  precioMax?: number       // rango máximo de precio
-  calificacion: number     // 1-5
-  foto?: string
-  notas?: string
+  whatsapp?: string | null
+  sitioWeb?: string | null
+  descripcion?: string | null
+  servicios?: string[] | null
+  precioBase?: number | null
+  precioMin?: number | null
+  precioMax?: number | null
+  calificacion: number
+  foto?: string | null
+  notas?: string | null
   creadoEn: string
 }
 
@@ -105,15 +116,16 @@ export type EstadoLinea = 'pendiente' | 'pagado_parcial' | 'pagado'
 
 export interface LineaPresupuesto {
   id: string
+  plannerId?: string
   eventoId: string
   categoria: CategoriaProveedor
   concepto: string
-  proveedorId?: string
+  proveedorId?: string | null
   montoEstimado: number
-  montoReal?: number
+  montoReal?: number | null
   montoPagado: number
   estado: EstadoLinea
-  notas?: string
+  notas?: string | null
 }
 
 export interface Presupuesto {
@@ -132,12 +144,13 @@ export type EstadoTarea = 'pendiente' | 'en_progreso' | 'completada' | 'atrasada
 
 export interface Tarea {
   id: string
+  plannerId?: string
   eventoId: string
   titulo: string
-  descripcion?: string
-  responsable?: string
-  fechaInicio?: string     // ISO 8601, start of task bar in Gantt
-  fechaVencimiento: string // ISO 8601
+  descripcion?: string | null
+  responsable?: string | null
+  fechaInicio?: string | null
+  fechaVencimiento: string
   estado: EstadoTarea
   fase: string
   orden: number
@@ -152,15 +165,16 @@ export type TipoContrato = 'cliente' | 'proveedor'
 
 export interface Contrato {
   id: string
+  plannerId?: string
   eventoId: string
   tipo: TipoContrato
-  contraparte: string // nombre legible del cliente o proveedor
+  contraparte: string
   contraparteId: string
   estado: EstadoContrato
   montoTotal: number
   fechaCreacion: string
-  fechaEnvio?: string
-  fechaFirma?: string
+  fechaEnvio?: string | null
+  fechaFirma?: string | null
   version: number
 }
 
@@ -172,14 +186,15 @@ export type EstadoODP = 'pendiente' | 'confirmada' | 'completada' | 'cancelada'
 
 export interface ODP {
   id: string
+  plannerId?: string
   eventoId: string
   proveedorId: string
   descripcion: string
   monto: number
-  fecha: string // ISO 8601 — fecha del servicio
+  fecha: string
   estado: EstadoODP
-  requerimientos?: string
-  notas?: string
+  requerimientos?: string | null
+  notas?: string | null
 }
 
 // ============================================================
@@ -188,6 +203,7 @@ export interface ODP {
 
 export interface Paquete {
   id: string
+  plannerId?: string
   nombre: string
   descripcion: string
   precio: number

@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
 import { CheckCircle2, Clock, AlertCircle } from 'lucide-react'
-import { getEventoById } from '@/lib/api/eventos'
-import { getPaqueteById } from '@/lib/api/paquetes'
-import { getContratosByEvento } from '@/lib/api/contratos'
+import { getEventoById } from '@/lib/data'
+import { getPaqueteById } from '@/lib/data'
+import { getContratosByEvento } from '@/lib/data'
 
 interface Props {
   params: Promise<{ id: string }>

@@ -26,10 +26,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { getClienteById } from '@/lib/api/clientes'
-import { getEventos } from '@/lib/api/eventos'
-import { getPresupuestoByEvento } from '@/lib/api/presupuesto'
-import { getContratosByContraparteId } from '@/lib/api/contratos'
+import {
+  getClienteById,
+  getEventos,
+  getPresupuestoByEvento,
+  getContratosByContraparteId,
+} from '@/lib/data'
 import { EditarClienteDialog } from '@/components/clientes/EditarClienteDialog'
 import { cn } from '@/lib/utils'
 

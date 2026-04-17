@@ -3,10 +3,10 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { getProveedorById } from '@/lib/api/proveedores'
-import { getODPById } from '@/lib/api/odp'
-import { getEventoById } from '@/lib/api/eventos'
-import { getPlanner } from '@/lib/api/planner'
+import { getProveedorById } from '@/lib/data'
+import { getODPById } from '@/lib/data'
+import { getEventoById } from '@/lib/data'
+import { getPlanner } from '@/lib/data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -38,6 +38,7 @@ export default async function ODPDetailPage({ params }: Props) {
     getPlanner(),
   ])
   if (!proveedor) notFound()
+  if (!planner) notFound()
 
   const odp = await getODPById(odpId)
   if (!odp || odp.proveedorId !== id) notFound()

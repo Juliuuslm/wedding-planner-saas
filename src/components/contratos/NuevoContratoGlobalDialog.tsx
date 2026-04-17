@@ -58,7 +58,6 @@ export function NuevoContratoGlobalDialog() {
         contraparteId: contraparteId || contraparte,
         estado: 'borrador',
         montoTotal: Number(montoTotal),
-        fechaCreacion: new Date().toISOString(),
         version: 1,
       })
       setOpen(false)

@@ -76,11 +76,11 @@ const columns = [
     cell: (info) => {
       const real = info.getValue()
       const estimado = info.row.original.montoEstimado
-      const over = real !== undefined && real > estimado
+      const over = real != null && real > estimado
       return (
         <span className={cn('flex items-center justify-end gap-1 tabular-nums', over && 'text-danger')}>
           {over && <AlertTriangle className="h-3 w-3 shrink-0" />}
-          {real !== undefined ? fmt(real) : <span className="text-text-muted">—</span>}
+          {real != null ? fmt(real) : <span className="text-text-muted">—</span>}
         </span>
       )
     },

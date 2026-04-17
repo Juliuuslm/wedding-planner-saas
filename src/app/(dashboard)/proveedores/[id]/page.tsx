@@ -12,9 +12,7 @@ import {
   CheckCircle2,
   CalendarDays,
 } from 'lucide-react'
-import { getProveedorById } from '@/lib/api/proveedores'
-import { getODPsByProveedor } from '@/lib/api/odp'
-import { getEventos } from '@/lib/api/eventos'
+import { getProveedorById, getODPsByProveedor, getEventos } from '@/lib/data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'

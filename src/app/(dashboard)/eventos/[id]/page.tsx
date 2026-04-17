@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
-import { getEventoFull } from '@/lib/api/eventos'
+import { getEventoFull } from '@/lib/data'
 import { EventoHeader } from '@/components/eventos/EventoHeader'
 import { EventoTabs } from '@/components/eventos/EventoTabs'
 

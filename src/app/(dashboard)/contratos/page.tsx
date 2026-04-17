@@ -190,7 +190,7 @@ export default function ContratosPage() {
                         contrato.fechaFirma ? 'font-medium text-success' : 'text-text-muted',
                       )}
                     >
-                      {fmtDate(contrato.fechaFirma)}
+                      {contrato.fechaFirma ? fmtDate(contrato.fechaFirma) : '—'}
                     </TableCell>
                     <TableCell>
                       <Button

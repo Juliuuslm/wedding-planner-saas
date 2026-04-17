@@ -22,7 +22,7 @@ import type { Cliente, Paquete, TipoEvento } from '@/types'
 const TIPOS_EVENTO: { value: TipoEvento; label: string }[] = [
   { value: 'boda',        label: 'Boda' },
   { value: 'bautizo',     label: 'Bautizo' },
-  { value: 'quinceañera', label: 'Quinceañera' },
+  { value: 'quinceanera', label: 'Quinceañera' },
   { value: 'corporativo', label: 'Corporativo' },
   { value: 'otro',        label: 'Otro' },
 ]
@@ -76,7 +76,6 @@ export function NuevoEventoDialog() {
         tipo,
         fecha,
         clienteId,
-        plannerId: 'planner-1',
         venue: venue || undefined,
         numeroInvitados: numeroInvitados ? Number(numeroInvitados) : undefined,
         paqueteId: paqueteId || undefined,

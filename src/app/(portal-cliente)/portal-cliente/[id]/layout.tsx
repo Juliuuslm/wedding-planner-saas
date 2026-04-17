@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getEventoById } from '@/lib/api/eventos'
-import { getClienteById } from '@/lib/api/clientes'
-import { getPlanner } from '@/lib/api/planner'
+import { getEventoById } from '@/lib/data'
+import { getClienteById } from '@/lib/data'
+import { getPlanner } from '@/lib/data'
 
 interface PortalClienteIdLayoutProps {
   children: React.ReactNode
@@ -28,6 +28,7 @@ export default async function PortalClienteIdLayout({
 
   const cliente = await getClienteById(evento.clienteId)
   const planner = await getPlanner()
+  if (!planner) notFound()
 
   const eventDate = new Date(evento.fecha)
   const today     = new Date()

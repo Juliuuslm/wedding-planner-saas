@@ -11,7 +11,7 @@ const ESTADO_MAP = {
   atrasada:    { label: 'Atrasada',    className: 'bg-danger/10 text-danger border-danger/30' },
 }
 
-function getInitials(name?: string) {
+function getInitials(name?: string | null) {
   if (!name) return '?'
   const parts = name.trim().split(' ')
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase()

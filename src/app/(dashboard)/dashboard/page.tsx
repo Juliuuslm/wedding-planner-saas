@@ -7,12 +7,14 @@ import {
   AlertTriangle,
   TriangleAlert,
 } from 'lucide-react'
-import { getEventos } from '@/lib/api/eventos'
-import { getClientes } from '@/lib/api/clientes'
-import { getTareasByEvento } from '@/lib/api/tareas'
-import { getPresupuestoByEvento } from '@/lib/api/presupuesto'
-import { getODPsByEvento } from '@/lib/api/odp'
-import { getContratos } from '@/lib/api/contratos'
+import {
+  getEventos,
+  getClientes,
+  getTareasByEvento,
+  getPresupuestoByEvento,
+  getODPsByEvento,
+  getContratos,
+} from '@/lib/data'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { EventoCard } from '@/components/dashboard/EventoCard'
 import {

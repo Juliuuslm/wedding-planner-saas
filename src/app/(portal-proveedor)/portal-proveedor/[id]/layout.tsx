@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
-import { getProveedorById } from '@/lib/api/proveedores'
+import { getProveedorById } from '@/lib/data'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { CategoriaProveedor } from '@/types'

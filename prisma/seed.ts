@@ -128,7 +128,7 @@ async function main() {
       data: {
         plannerId: planner.id,
         nombre: e.nombre,
-        tipo: e.tipo === 'quinceañera' ? 'quinceanera' : e.tipo,
+        tipo: e.tipo,
         fecha: new Date(e.fecha),
         clienteId: clienteMap.get(e.clienteId)!,
         venue: e.venue,
