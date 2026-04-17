@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeddingSaaS — Documentación</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ── Header ────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">AM</div>
+        <div>
+          <h1>WeddingSaaS</h1>
+          <p class="subtitle">Plataforma SaaS para Wedding Planners</p>
+        </div>
+      </div>
+      <nav class="header-nav">
+        <a href="#sitemap" class="nav-link active">Sitemap</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#userflows" class="nav-link">User Flows</a>
+        <a href="#tech" class="nav-link">Tech Stack</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ── Sitemap ───────────────────────────────────────────── -->
+    <section id="sitemap" class="section">
+      <h2 class="section-title">Sitemap</h2>
+      <p class="section-desc">17 pantallas desarrolladas en 3 portales independientes</p>
+
+      <div class="sitemap-container">
+        <!-- Dashboard group -->
+        <div class="sitemap-group">
+          <div class="group-header planner">
+            <span class="group-icon">&#9776;</span>
+            Panel del Planner
+          </div>
+          <div class="sitemap-tree">
+            <div class="tree-node root" data-route="/">
+              <span class="node-badge redirect">redirect</span>
+              <span class="node-name">/</span>
+              <span class="node-arrow">&#8594;</span> /dashboard
+            </div>
+            <div class="tree-node" data-route="/dashboard">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/dashboard</span>
+              <span class="node-meta">KPIs, eventos activos, tareas, pagos, alertas</span>
+            </div>
+            <div class="tree-node" data-route="/clientes">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/clientes</span>
+              <span class="node-meta">Lista + filtros + buscar + crear</span>
+            </div>
+            <div class="tree-node child" data-route="/clientes/[id]">
+              <span class="node-badge dynamic">dynamic</span>
+              <span class="node-name">/clientes/[id]</span>
+              <span class="node-meta">Perfil, eventos, pagos, docs</span>
+            </div>
+            <div class="tree-node" data-route="/eventos">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/eventos</span>
+              <span class="node-meta">Grid + filtros estado/fecha</span>
+            </div>
+            <div class="tree-node child" data-route="/eventos/[id]">
+              <span class="node-badge dynamic">dynamic</span>
+              <span class="node-name">/eventos/[id]</span>
+              <span class="node-meta">7 tabs: General, Presupuesto, Timeline, Proveedores, Contratos, Diseño, Portal</span>
+            </div>
+            <div class="tree-node" data-route="/proveedores">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/proveedores</span>
+              <span class="node-meta">Catálogo + filtro categoría</span>
+            </div>
+            <div class="tree-node child" data-route="/proveedores/[id]">
+              <span class="node-badge dynamic">dynamic</span>
+              <span class="node-name">/proveedores/[id]</span>
+              <span class="node-meta">Perfil, servicios, ODPs, historial</span>
+            </div>
+            <div class="tree-node" data-route="/contratos">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/contratos</span>
+              <span class="node-meta">Tabla + filtros tipo/estado</span>
+            </div>
+            <div class="tree-node" data-route="/diseno">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/diseno</span>
+              <span class="node-meta">Assets visuales + filtros</span>
+            </div>
+            <div class="tree-node" data-route="/configuracion">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/configuracion</span>
+              <span class="node-meta">5 tabs: Perfil, Empresa, Paquetes, Equipo, Notificaciones</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Client Portal -->
+        <div class="sitemap-group">
+          <div class="group-header client">
+            <span class="group-icon">&#9829;</span>
+            Portal del Cliente
+          </div>
+          <div class="sitemap-tree">
+            <div class="tree-node" data-route="/portal-cliente/[id]">
+              <span class="node-badge dynamic">dynamic</span>
+              <span class="node-name">/portal-cliente/[id]</span>
+              <span class="node-meta">Progreso, hitos, aprobaciones</span>
+            </div>
+            <div class="tree-node child" data-route="/portal-cliente/[id]/pagos">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/portal-cliente/[id]/pagos</span>
+              <span class="node-meta">Resumen pagos, timeline</span>
+            </div>
+            <div class="tree-node child" data-route="/portal-cliente/[id]/disenos">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/portal-cliente/[id]/disenos</span>
+              <span class="node-meta">Galería + aprobaciones</span>
+            </div>
+            <div class="tree-node child" data-route="/portal-cliente/[id]/mensajes">
+              <span class="node-badge page">page</span>
+              <span class="node-name">/portal-cliente/[id]/mensajes</span>
+              <span class="node-meta">Contacto planner (placeholder)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vendor Portal -->
+        <div class="sitemap-group">
+          <div class="group-header vendor">
+            <span class="group-icon">&#9733;</span>
+            Portal del Proveedor
+          </div>
+          <div class="sitemap-tree">
+            <div class="tree-node" data-route="/portal-proveedor/[id]">
+              <span class="node-badge dynamic">dynamic</span>
+              <span class="node-name">/portal-proveedor/[id]</span>
+              <span class="node-meta">KPIs, ODPs asignadas, pagos</span>
+            </div>
+            <div class="tree-node child" data-route="/portal-proveedor/[id]/odp/[odp-id]">
+              <span class="node-badge dynamic">dynamic</span>
+              <span class="node-name">/portal-proveedor/[id]/odp/[odp-id]</span>
+              <span class="node-meta">Detalle ODP, chat, acciones</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Features ──────────────────────────────────────────── -->
+    <section id="features" class="section">
+      <h2 class="section-title">Features Desarrolladas</h2>
+      <p class="section-desc">Estado actual del prototipo — Fase 1 completa</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">&#128202;</div>
+          <h3>Dashboard</h3>
+          <ul>
+            <li>4 KPI cards con animaciones</li>
+            <li>Eventos activos en grid</li>
+            <li>Tareas pendientes del día</li>
+            <li>Próximos pagos</li>
+            <li>Alertas y notificaciones</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#128101;</div>
+          <h3>CRM Clientes</h3>
+          <ul>
+            <li>Lista con búsqueda y filtros</li>
+            <li>Perfil detallado del cliente</li>
+            <li>Historial de eventos y pagos</li>
+            <li>Diálogo crear cliente</li>
+            <li>Estados: prospecto, activo, completado</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#128141;</div>
+          <h3>Gestión de Eventos</h3>
+          <ul>
+            <li>Grid con filtros estado/fecha</li>
+            <li>Detalle con 7 tabs</li>
+            <li>Header con progreso visual</li>
+            <li>Navegación entre tabs</li>
+            <li>Indicadores de completitud</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#128176;</div>
+          <h3>Presupuesto</h3>
+          <ul>
+            <li>Tabla editable (TanStack Table)</li>
+            <li>Categorías expandibles</li>
+            <li>Cálculos automáticos</li>
+            <li>Barra progreso presupuesto</li>
+            <li>Botón exportar Excel</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#128197;</div>
+          <h3>Timeline / Hoja de Ruta</h3>
+          <ul>
+            <li>Vista Gantt (FullCalendar)</li>
+            <li>Vista lista con drag & drop</li>
+            <li>Fases del evento</li>
+            <li>Filtros por responsable/estado</li>
+            <li>Crear tareas con diálogo</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#128188;</div>
+          <h3>Catálogo Proveedores</h3>
+          <ul>
+            <li>Grid por categorías (11 tipos)</li>
+            <li>Búsqueda y filtros</li>
+            <li>Perfil con servicios y precios</li>
+            <li>Historial de ODPs</li>
+            <li>Calificación con estrellas</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#128221;</div>
+          <h3>Contratos</h3>
+          <ul>
+            <li>Tabla con filtros tipo/estado</li>
+            <li>Templates auto-completados</li>
+            <li>Generación PDF (React PDF)</li>
+            <li>Estados: borrador, enviado, firmado</li>
+            <li>Historial de versiones</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#127912;</div>
+          <h3>Módulo Diseño</h3>
+          <ul>
+            <li>Galería de assets por evento</li>
+            <li>Filtros por categoría</li>
+            <li>Placeholder Canva embed</li>
+            <li>Vínculo asset-proveedor</li>
+            <li>Upload assets (visual)</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#128100;</div>
+          <h3>Portal Cliente</h3>
+          <ul>
+            <li>Hero con countdown boda</li>
+            <li>Timeline de progreso</li>
+            <li>Aprobaciones de diseño</li>
+            <li>Estado de pagos</li>
+            <li>Contacto con planner</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#9733;</div>
+          <h3>Portal Proveedor</h3>
+          <ul>
+            <li>KPIs del proveedor</li>
+            <li>Lista de ODPs asignadas</li>
+            <li>Detalle ODP con chat</li>
+            <li>Acciones: confirmar/rechazar</li>
+            <li>Resumen de pagos</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">&#9881;</div>
+          <h3>Configuración</h3>
+          <ul>
+            <li>Perfil del planner</li>
+            <li>Datos de empresa + logo</li>
+            <li>Gestión de paquetes</li>
+            <li>Gestión de equipo</li>
+            <li>Preferencias notificaciones</li>
+          </ul>
+          <span class="feature-status done">Completo</span>
+        </div>
+
+        <div class="feature-card pending">
+          <div class="feature-icon">&#128274;</div>
+          <h3>Autenticación</h3>
+          <ul>
+            <li>Clerk multi-tenant</li>
+            <li>Roles: planner, vendor, client</li>
+            <li>JWT validation en backend</li>
+            <li>Onboarding flow</li>
+            <li>Invitaciones por email</li>
+          </ul>
+          <span class="feature-status next">Paso 4 — Próximo</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── User Flows ────────────────────────────────────────── -->
+    <section id="userflows" class="section">
+      <h2 class="section-title">User Flows</h2>
+      <p class="section-desc">Flujos principales de cada tipo de usuario</p>
+
+      <!-- Flow 1: Planner main -->
+      <div class="flow-container">
+        <h3 class="flow-title">1. Planner — Gestión de un evento completo</h3>
+        <div class="flow-diagram" id="flow-planner">
+          <div class="flow-row">
+            <div class="flow-node start">Login</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Dashboard</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node action">+ Nuevo Cliente</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">CRM Clientes</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row reverse">
+            <div class="flow-node">Tab Presupuesto</div>
+            <div class="flow-arrow">&#8592;</div>
+            <div class="flow-node highlight">Evento [id]</div>
+            <div class="flow-arrow">&#8592;</div>
+            <div class="flow-node action">+ Nuevo Evento</div>
+            <div class="flow-arrow">&#8592;</div>
+            <div class="flow-node">Cliente [id]</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node">Agregar líneas</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Tab Timeline</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Crear tareas</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Tab Proveedores</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row reverse">
+            <div class="flow-node end">Evento listo</div>
+            <div class="flow-arrow">&#8592;</div>
+            <div class="flow-node">Tab Portal</div>
+            <div class="flow-arrow">&#8592;</div>
+            <div class="flow-node">Tab Diseño</div>
+            <div class="flow-arrow">&#8592;</div>
+            <div class="flow-node">Tab Contratos</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow 2: Client -->
+      <div class="flow-container">
+        <h3 class="flow-title">2. Cliente — Seguimiento de su boda</h3>
+        <div class="flow-diagram">
+          <div class="flow-row">
+            <div class="flow-node start">Accede al portal</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node highlight">Progreso</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Ve hitos y %</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node">Mis Pagos</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Resumen + timeline</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node">Diseños</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node action">Aprobar / Rechazar</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node">Mensajes</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node end">Contactar planner</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow 3: Vendor -->
+      <div class="flow-container">
+        <h3 class="flow-title">3. Proveedor — Gestión de ODPs</h3>
+        <div class="flow-diagram">
+          <div class="flow-row">
+            <div class="flow-node start">Accede al portal</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node highlight">Dashboard</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Ve KPIs + ODPs</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node">Selecciona ODP</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Detalle ODP</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Ve requerimientos</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node action">Confirmar ODP</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node end">ODP confirmada</div>
+          </div>
+          <div class="flow-annotation">o</div>
+          <div class="flow-row">
+            <div class="flow-node action warning">Solicitar cambios</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Chat con planner</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow 4: Budget -->
+      <div class="flow-container">
+        <h3 class="flow-title">4. Planner — Gestión de presupuesto</h3>
+        <div class="flow-diagram">
+          <div class="flow-row">
+            <div class="flow-node">Evento [id]</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node highlight">Tab Presupuesto</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Ve tabla por categorías</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node action">+ Agregar línea</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Editar montos</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Asignar proveedor</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node">Totales auto-calculados</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Barra de progreso</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node end">Exportar Excel</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow 5: Contratos -->
+      <div class="flow-container">
+        <h3 class="flow-title">5. Planner — Flujo de contratos</h3>
+        <div class="flow-diagram">
+          <div class="flow-row">
+            <div class="flow-node">Evento [id]</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node highlight">Tab Contratos</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node action">+ Nuevo contrato</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node state borrador">Borrador</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Auto-completar datos</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node action">Generar PDF</div>
+          </div>
+          <div class="flow-connector down">&#8595;</div>
+          <div class="flow-row">
+            <div class="flow-node state enviado">Enviado</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node">Cliente/Proveedor recibe</div>
+            <div class="flow-arrow">&#8594;</div>
+            <div class="flow-node state firmado">Firmado</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Tech Stack ────────────────────────────────────────── -->
+    <section id="tech" class="section">
+      <h2 class="section-title">Tech Stack</h2>
+
+      <div class="tech-grid">
+        <div class="tech-group">
+          <h3>Frontend</h3>
+          <div class="tech-list">
+            <span class="tech-tag">Next.js 16</span>
+            <span class="tech-tag">React 19</span>
+            <span class="tech-tag">TypeScript 5</span>
+            <span class="tech-tag">Tailwind CSS 4</span>
+            <span class="tech-tag">Shadcn/ui</span>
+            <span class="tech-tag">TanStack Table</span>
+            <span class="tech-tag">FullCalendar</span>
+            <span class="tech-tag">DnD Kit</span>
+            <span class="tech-tag">React PDF</span>
+            <span class="tech-tag">date-fns</span>
+            <span class="tech-tag">Lucide Icons</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h3>Backend</h3>
+          <div class="tech-list">
+            <span class="tech-tag">Rust</span>
+            <span class="tech-tag">Axum 0.8</span>
+            <span class="tech-tag">Tokio</span>
+            <span class="tech-tag">SQLx 0.8</span>
+            <span class="tech-tag">PostgreSQL 16</span>
+            <span class="tech-tag">jsonwebtoken</span>
+            <span class="tech-tag">utoipa (OpenAPI)</span>
+            <span class="tech-tag">tower-http</span>
+            <span class="tech-tag">serde</span>
+            <span class="tech-tag">chrono</span>
+          </div>
+        </div>
+        <div class="tech-group">
+          <h3>Infraestructura</h3>
+          <div class="tech-list">
+            <span class="tech-tag">Railway</span>
+            <span class="tech-tag">Docker</span>
+            <span class="tech-tag">Clerk (auth)</span>
+            <span class="tech-tag">Cloudflare R2</span>
+            <span class="tech-tag">Resend (email)</span>
+            <span class="tech-tag">pnpm</span>
+            <span class="tech-tag">GitHub</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>WeddingSaaS — Documentación interna &middot; Generada Abril 2026</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
