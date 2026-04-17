@@ -37,19 +37,24 @@ async function request<T>(
     params?: Record<string, string | undefined>
   },
 ): Promise<T> {
-  const url = new URL(`${BASE_URL}${path}`)
-
+  // BASE_URL puede ser relativo ('/api') o absoluto ('https://...').
+  // URL constructor requiere absolute URL → construimos query string a mano
+  // y dejamos que fetch resuelva el path relativo contra window.location.
+  let urlStr = `${BASE_URL}${path}`
   if (options?.params) {
+    const qs = new URLSearchParams()
     for (const [key, value] of Object.entries(options.params)) {
       if (value !== undefined && value !== '') {
-        url.searchParams.set(key, value)
+        qs.set(key, value)
       }
     }
+    const qsStr = qs.toString()
+    if (qsStr) urlStr += (urlStr.includes('?') ? '&' : '?') + qsStr
   }
 
   const authHeaders = await getAuthHeaders()
 
-  const res = await fetch(url.toString(), {
+  const res = await fetch(urlStr, {
     method,
     credentials: 'include',
     headers: {
