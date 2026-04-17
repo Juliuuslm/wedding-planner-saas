@@ -7,13 +7,8 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-# Baked at build time into the client bundle — must be set in Railway build args
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_USE_MOCK=false
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_USE_MOCK=$NEXT_PUBLIC_USE_MOCK
-
-RUN pnpm run build
+# Prisma client generation before Next build
+RUN pnpm prisma generate && pnpm run build
 
 FROM node:22-slim AS runner
 WORKDIR /app
