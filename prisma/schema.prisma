@@ -1,0 +1,460 @@
+// Prisma schema — Plataforma SaaS Wedding Planners
+// Portado de backend/migrations/20260416120000_initial_schema.sql (rama archive/rust-backend)
+// Cambios vs schema Rust:
+//   - `clerk_user_id` renombrado a `authUserId` (neutral a proveedor de auth; usamos Auth.js)
+//   - Agregadas tablas de Auth.js (User, Account, Session, VerificationToken)
+//   - `planner_id` sigue siendo la raíz del tenant. Cada usuario Auth.js puede ser un planner, un cliente, o un vendor.
+//   - RLS se habilita en una migración SQL separada (ver prisma/migrations/XXXXXX_enable_rls)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum EstadoCliente {
+  prospecto
+  activo
+  completado
+  cancelado
+
+  @@map("estado_cliente")
+}
+
+enum TipoEvento {
+  boda
+  bautizo
+  quinceanera  @map("quinceañera")
+  corporativo
+  otro
+
+  @@map("tipo_evento")
+}
+
+enum EstadoEvento {
+  planificacion
+  activo
+  completado
+  cancelado
+
+  @@map("estado_evento")
+}
+
+enum CategoriaProveedor {
+  venue
+  catering
+  fotografia
+  video
+  musica
+  flores
+  decoracion
+  pasteleria
+  invitaciones
+  transporte
+  entretenimiento
+  iluminacion
+  mobiliario
+  otro
+
+  @@map("categoria_proveedor")
+}
+
+enum EstadoPago {
+  pendiente
+  pagado_parcial
+  pagado
+
+  @@map("estado_pago")
+}
+
+enum EstadoTarea {
+  pendiente
+  en_progreso
+  completada
+  atrasada
+
+  @@map("estado_tarea")
+}
+
+enum TipoContrato {
+  cliente
+  proveedor
+
+  @@map("tipo_contrato")
+}
+
+enum EstadoContrato {
+  borrador
+  enviado
+  firmado
+  cancelado
+
+  @@map("estado_contrato")
+}
+
+enum EstadoOdp {
+  pendiente
+  confirmada
+  completada
+  cancelada
+
+  @@map("estado_odp")
+}
+
+enum UserRole {
+  planner
+  client
+  vendor
+
+  @@map("user_role")
+}
+
+// ============================================================
+// Auth.js tables (NextAuth v5 + Prisma adapter)
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  name          String?
+  image         String?
+  passwordHash  String?   @map("password_hash")
+  role          UserRole  @default(planner)
+
+  // Scope: qué registro de dominio representa este usuario
+  plannerId     String?   @map("planner_id") @db.Uuid
+  clientId      String?   @map("client_id") @db.Uuid
+  vendorId      String?   @map("vendor_id") @db.Uuid
+
+  planner       Planner?  @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  cliente       Cliente?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  vendor        Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([plannerId])
+  @@index([clientId])
+  @@index([vendorId])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// Domain: Planner (tenant root)
+// ============================================================
+
+model Planner {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  authUserId  String   @unique @map("auth_user_id")
+  nombre      String
+  empresa     String
+  email       String
+  telefono    String   @default("")
+  logo        String?
+  moneda      String   @default("MXN")
+  zonaHoraria String   @default("America/Mexico_City") @map("zona_horaria")
+  creadoEn    DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  users     User[]
+  clientes  Cliente[]
+  paquetes  Paquete[]
+  eventos   Evento[]
+  vendors   Vendor[]
+  budgets   LineaPresupuesto[]
+  tareas    Tarea[]
+  contratos Contrato[]
+  odps      Odp[]
+
+  @@map("planners")
+}
+
+// ============================================================
+// Domain: Cliente
+// ============================================================
+
+model Cliente {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId      String        @map("planner_id") @db.Uuid
+  nombre         String
+  apellido       String
+  email          String
+  telefono       String        @default("")
+  estado         EstadoCliente @default(prospecto)
+  notas          String?
+  creadoEn       DateTime      @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn  DateTime      @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  planner Planner  @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  eventos Evento[]
+  users   User[]
+
+  @@index([plannerId])
+  @@index([plannerId, estado])
+  @@map("clients")
+}
+
+// ============================================================
+// Domain: Paquete
+// ============================================================
+
+model Paquete {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId   String   @map("planner_id") @db.Uuid
+  nombre      String
+  descripcion String   @default("")
+  precio      Float    @default(0)
+  servicios   Json     @default("[]")
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  planner Planner  @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  eventos Evento[]
+
+  @@index([plannerId])
+  @@map("packages")
+}
+
+// ============================================================
+// Domain: Evento
+// ============================================================
+
+model Evento {
+  id                String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId         String       @map("planner_id") @db.Uuid
+  nombre            String
+  tipo              TipoEvento   @default(boda)
+  fecha             DateTime     @db.Date
+  clienteId         String       @map("cliente_id") @db.Uuid
+  venue             String?
+  numeroInvitados   Int?         @map("numero_invitados")
+  paqueteId         String?      @map("paquete_id") @db.Uuid
+  estado            EstadoEvento @default(planificacion)
+  presupuestoTotal  Float        @default(0) @map("presupuesto_total")
+  progreso          Float        @default(0)
+  notas             String?
+  creadoEn          DateTime     @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn     DateTime     @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  planner    Planner            @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  cliente    Cliente            @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  paquete    Paquete?           @relation(fields: [paqueteId], references: [id], onDelete: SetNull)
+  budget     LineaPresupuesto[]
+  tareas     Tarea[]
+  contratos  Contrato[]
+  odps       Odp[]
+  vendors    EventVendor[]
+
+  @@index([plannerId])
+  @@index([clienteId])
+  @@index([plannerId, fecha])
+  @@index([plannerId, estado])
+  @@map("events")
+}
+
+// ============================================================
+// Domain: Vendor (proveedor)
+// ============================================================
+
+model Vendor {
+  id           String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId    String             @map("planner_id") @db.Uuid
+  nombre       String
+  categoria    CategoriaProveedor @default(otro)
+  contacto     String?
+  email        String
+  telefono     String             @default("")
+  whatsapp     String?
+  sitioWeb     String?            @map("sitio_web")
+  descripcion  String?
+  servicios    Json?              @default("[]")
+  precioBase   Float?             @map("precio_base")
+  precioMin    Float?             @map("precio_min")
+  precioMax    Float?             @map("precio_max")
+  calificacion Float              @default(0)
+  foto         String?
+  notas        String?
+  creadoEn     DateTime           @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  planner   Planner            @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  budgets   LineaPresupuesto[]
+  odps      Odp[]
+  events    EventVendor[]
+  users     User[]
+
+  @@index([plannerId])
+  @@index([plannerId, categoria])
+  @@map("vendors")
+}
+
+// ============================================================
+// Domain: LineaPresupuesto (budget_items)
+// ============================================================
+
+model LineaPresupuesto {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId      String             @map("planner_id") @db.Uuid
+  eventoId       String             @map("evento_id") @db.Uuid
+  categoria      CategoriaProveedor
+  concepto       String
+  proveedorId    String?            @map("proveedor_id") @db.Uuid
+  montoEstimado  Float              @default(0) @map("monto_estimado")
+  montoReal      Float?             @map("monto_real")
+  montoPagado    Float              @default(0) @map("monto_pagado")
+  estado         EstadoPago         @default(pendiente)
+  notas          String?
+
+  planner  Planner @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  evento   Evento  @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  vendor   Vendor? @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
+
+  @@index([eventoId])
+  @@index([plannerId])
+  @@map("budget_items")
+}
+
+// ============================================================
+// Domain: Tarea
+// ============================================================
+
+model Tarea {
+  id               String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId        String      @map("planner_id") @db.Uuid
+  eventoId         String      @map("evento_id") @db.Uuid
+  titulo           String
+  descripcion      String?
+  responsable      String?
+  fechaInicio      DateTime?   @map("fecha_inicio") @db.Date
+  fechaVencimiento DateTime    @map("fecha_vencimiento") @db.Date
+  estado           EstadoTarea @default(pendiente)
+  fase             String      @default("")
+  orden            Int         @default(0)
+
+  planner Planner @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  evento  Evento  @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  @@index([eventoId])
+  @@index([plannerId])
+  @@index([eventoId, estado])
+  @@map("tasks")
+}
+
+// ============================================================
+// Domain: Contrato
+// ============================================================
+
+model Contrato {
+  id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId      String         @map("planner_id") @db.Uuid
+  eventoId       String         @map("evento_id") @db.Uuid
+  tipo           TipoContrato
+  contraparte    String
+  contraparteId  String         @map("contraparte_id") @db.Uuid
+  estado         EstadoContrato @default(borrador)
+  montoTotal     Float          @default(0) @map("monto_total")
+  fechaCreacion  DateTime       @default(now()) @map("fecha_creacion") @db.Timestamptz(6)
+  fechaEnvio     DateTime?      @map("fecha_envio") @db.Timestamptz(6)
+  fechaFirma     DateTime?      @map("fecha_firma") @db.Timestamptz(6)
+  version        Int            @default(1)
+
+  planner Planner @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  evento  Evento  @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  @@index([eventoId])
+  @@index([plannerId])
+  @@map("contracts")
+}
+
+// ============================================================
+// Domain: ODP (Órdenes de Desempeño)
+// ============================================================
+
+model Odp {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId      String    @map("planner_id") @db.Uuid
+  eventoId       String    @map("evento_id") @db.Uuid
+  proveedorId    String    @map("proveedor_id") @db.Uuid
+  descripcion    String
+  monto          Float     @default(0)
+  fecha          DateTime  @db.Date
+  estado         EstadoOdp @default(pendiente)
+  requerimientos String?
+  notas          String?
+
+  planner  Planner @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  evento   Evento  @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  vendor   Vendor  @relation(fields: [proveedorId], references: [id], onDelete: Restrict)
+
+  @@index([eventoId])
+  @@index([proveedorId])
+  @@index([plannerId])
+  @@map("odp")
+}
+
+// ============================================================
+// Domain: EventVendor (join vendor ↔ event)
+// ============================================================
+
+model EventVendor {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventoId    String   @map("evento_id") @db.Uuid
+  proveedorId String   @map("proveedor_id") @db.Uuid
+  asignadoEn  DateTime @default(now()) @map("asignado_en") @db.Timestamptz(6)
+
+  evento Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+
+  @@unique([eventoId, proveedorId])
+  @@index([eventoId])
+  @@index([proveedorId])
+  @@map("event_vendors")
+}
