@@ -3,11 +3,13 @@ export const dynamic = 'force-dynamic'
 import {
   CalendarHeart,
   CheckSquare,
-  CreditCard,
-  AlertTriangle,
   TriangleAlert,
   Plus,
   Users,
+  Sparkles,
+  Clock,
+  PartyPopper,
+  CheckCircle2,
 } from 'lucide-react'
 import {
   getEventos,
@@ -73,7 +75,10 @@ export default async function DashboardPage() {
     getPlanner(),
   ])
 
-  const eventosActivos = allEventos.filter((e) => e.estado === 'activo')
+  const eventosActivos       = allEventos.filter((e) => e.estado === 'activo')
+  const eventosLeads         = allEventos.filter((e) => e.estado === 'lead')
+  const eventosPlanificacion = allEventos.filter((e) => e.estado === 'planificacion')
+  const eventosCompletados   = allEventos.filter((e) => e.estado === 'completado')
 
   // Gather tasks and budget lines from all events
   const allTareasArrays = await Promise.all(
@@ -159,21 +164,84 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── KPI Cards — staggered entrance ────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '0ms', animationDuration: '350ms' }}>
-          <KpiCard label="Eventos activos" value={eventosActivos.length} description={`De ${allEventos.length} en total`} icon={CalendarHeart} iconClassName="bg-gold/10 text-gold" />
+      {/* ── Funnel KPIs — pipeline de ventas y ejecución ──────────── */}
+      <section>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-base font-semibold text-text-primary">Pipeline</h2>
+          <p className="text-xs text-text-muted">{allEventos.length} eventos en total</p>
         </div>
-        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '80ms', animationDuration: '350ms' }}>
-          <KpiCard label="Tareas pendientes" value={tareasPendientes.length} description="Próximas a vencer" icon={CheckSquare} iconClassName="bg-brand/10 text-brand" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '0ms', animationDuration: '350ms' }}>
+            <KpiCard
+              label="Leads"
+              value={eventosLeads.length}
+              description="Por confirmar"
+              icon={Sparkles}
+              iconClassName="bg-brand/10 text-brand"
+              href="/eventos?estado=lead"
+            />
+          </div>
+          <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '80ms', animationDuration: '350ms' }}>
+            <KpiCard
+              label="Planificación"
+              value={eventosPlanificacion.length}
+              description="En preparación"
+              icon={Clock}
+              iconClassName="bg-gold/10 text-gold"
+              href="/eventos?estado=planificacion"
+            />
+          </div>
+          <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '160ms', animationDuration: '350ms' }}>
+            <KpiCard
+              label="Activos"
+              value={eventosActivos.length}
+              description="Este mes"
+              icon={PartyPopper}
+              iconClassName="bg-warning/10 text-warning"
+              href="/eventos?estado=activo"
+            />
+          </div>
+          <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '240ms', animationDuration: '350ms' }}>
+            <KpiCard
+              label="Completados"
+              value={eventosCompletados.length}
+              description="Histórico"
+              icon={CheckCircle2}
+              iconClassName="bg-success/10 text-success"
+              href="/eventos?estado=completado"
+            />
+          </div>
         </div>
-        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '160ms', animationDuration: '350ms' }}>
-          <KpiCard label="Pagos pendientes" value={formatMXN(montoPagos)} description="En líneas sin saldar" icon={CreditCard} iconClassName="bg-warning/10 text-warning" valueClassName="text-xl" />
+      </section>
+
+      {/* ── Métricas operativas secundarias ───────────────────────── */}
+      <section>
+        <h2 className="mb-3 text-base font-semibold text-text-primary">Esta semana</h2>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <KpiCard
+            label="Tareas pendientes"
+            value={tareasPendientes.length}
+            description="Próximas a vencer"
+            icon={CheckSquare}
+            iconClassName="bg-brand/10 text-brand"
+          />
+          <KpiCard
+            label="Pagos pendientes"
+            value={formatMXN(montoPagos)}
+            description="En líneas sin saldar"
+            icon={CalendarHeart}
+            iconClassName="bg-warning/10 text-warning"
+            valueClassName="text-xl"
+          />
+          <KpiCard
+            label="ODPs por confirmar"
+            value={odpsCount}
+            description="Proveedores pendientes"
+            icon={TriangleAlert}
+            iconClassName="bg-danger/10 text-danger"
+          />
         </div>
-        <div className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both" style={{ animationDelay: '240ms', animationDuration: '350ms' }}>
-          <KpiCard label="ODPs por confirmar" value={odpsCount} description="Proveedores pendientes" icon={AlertTriangle} iconClassName="bg-danger/10 text-danger" />
-        </div>
-      </div>
+      </section>
 
       {/* ── Eventos activos ───────────────────────────────────────── */}
       <section>

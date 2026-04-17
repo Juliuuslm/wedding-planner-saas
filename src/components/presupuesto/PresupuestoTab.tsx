@@ -5,6 +5,7 @@ import { Download, ExternalLink, Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TablaPresupuesto } from './TablaPresupuesto'
+import { NuevaLineaDialog } from './NuevaLineaDialog'
 import { toastError, toastSuccess } from '@/lib/toast'
 import type { Evento, LineaPresupuesto } from '@/types'
 
@@ -81,6 +82,7 @@ export function PresupuestoTab({
 
       {/* ── Acciones ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-4">
+        <NuevaLineaDialog eventoId={evento.id} />
         <Button
           size="sm"
           variant="outline"

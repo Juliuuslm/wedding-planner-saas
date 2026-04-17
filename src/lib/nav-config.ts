@@ -4,7 +4,6 @@ import {
   CalendarHeart,
   Briefcase,
   FileSignature,
-  Palette,
   Settings,
   Plus,
 } from 'lucide-react'
@@ -30,11 +29,10 @@ export interface BreadcrumbItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard, segment: 'dashboard' },
+  { href: '/eventos',       label: 'Eventos',       icon: CalendarHeart,   segment: 'eventos' },
   { href: '/clientes',      label: 'Clientes',      icon: Users,           segment: 'clientes' },
-  { href: '/eventos',       label: 'Eventos',        icon: CalendarHeart,   segment: 'eventos' },
   { href: '/proveedores',   label: 'Proveedores',   icon: Briefcase,       segment: 'proveedores' },
-  { href: '/contratos',     label: 'Contratos',      icon: FileSignature,   segment: 'contratos' },
-  { href: '/diseno',        label: 'Diseño',         icon: Palette,         segment: 'diseno' },
+  { href: '/contratos',     label: 'Contratos',     icon: FileSignature,   segment: 'contratos' },
 ]
 
 export const NAV_BOTTOM: NavItem[] = [

@@ -47,7 +47,7 @@ export interface Cliente {
 
 // Nota: enum Prisma usa `quinceanera` (sin ñ, ASCII) por portabilidad.
 export type TipoEvento = 'boda' | 'bautizo' | 'quinceanera' | 'corporativo' | 'otro'
-export type EstadoEvento = 'planificacion' | 'activo' | 'completado' | 'cancelado'
+export type EstadoEvento = 'lead' | 'planificacion' | 'activo' | 'completado' | 'cancelado'
 
 export interface Evento {
   id: string
@@ -108,6 +108,22 @@ export interface Proveedor {
   creadoEn: string
 }
 
+export interface ServicioProveedor {
+  id: string
+  plannerId?: string
+  proveedorId: string
+  nombre: string
+  descripcion?: string | null
+  precio: number
+  unidad: string
+  cantidadTipica?: number | null
+  categoria?: string | null
+  disponible: boolean
+  notas?: string | null
+  creadoEn: string
+  actualizadoEn: string
+}
+
 // ============================================================
 // PRESUPUESTO
 // ============================================================
@@ -121,6 +137,7 @@ export interface LineaPresupuesto {
   categoria: CategoriaProveedor
   concepto: string
   proveedorId?: string | null
+  servicioId?: string | null
   montoEstimado: number
   montoReal?: number | null
   montoPagado: number

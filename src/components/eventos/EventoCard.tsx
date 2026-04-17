@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import type { Evento, Cliente } from '@/types'
 
 const ESTADO_MAP: Record<Evento['estado'], { label: string; className: string }> = {
+  lead:          { label: 'Lead',          className: 'bg-brand/10 text-brand border-brand/20' },
   activo:        { label: 'Activo',        className: 'bg-success/10 text-success border-success/20' },
   planificacion: { label: 'Planificación', className: 'bg-gold/10 text-gold border-gold/20' },
   completado:    { label: 'Completado',    className: 'bg-muted text-text-muted' },

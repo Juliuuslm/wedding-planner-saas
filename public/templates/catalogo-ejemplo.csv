@@ -1,0 +1,8 @@
+nombre,descripcion,precio,unidad,cantidadTipica,categoria,disponible,notas
+Centro de mesa rústico,Arreglo floral con eucalipto y velas,2500,pieza,1,Centros de mesa,true,Lead time 2 semanas
+Altar nupcial completo,Estructura con flores blancas y vegetación,35000,paquete,1,Altares,true,Requiere montaje el día previo
+Bouquet de novia,Flores naturales de temporada,1800,pieza,1,Personales,true,
+Corsage,Para madrina o invitada especial,450,pieza,1,Personales,true,
+Camino de mesa floral,Con vegetación y flores rosas,1200,metro,8,Centros de mesa,true,
+Menú de 3 tiempos,Entrada sopa plato fuerte y postre,1250,persona,100,Menús,true,Incluye pan y mantequilla
+Barra libre premium,5 horas con bartenders y mezcladores,450,persona,100,Bebidas,true,Mínimo 80 personas

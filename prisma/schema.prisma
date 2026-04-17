@@ -38,6 +38,7 @@ enum TipoEvento {
 }
 
 enum EstadoEvento {
+  lead
   planificacion
   activo
   completado
@@ -210,6 +211,7 @@ model Planner {
   paquetes  Paquete[]
   eventos   Evento[]
   vendors   Vendor[]
+  servicios ServicioProveedor[]
   budgets   LineaPresupuesto[]
   tareas    Tarea[]
   contratos Contrato[]
@@ -325,15 +327,44 @@ model Vendor {
   notas        String?
   creadoEn     DateTime           @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  planner   Planner            @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  planner   Planner              @relation(fields: [plannerId], references: [id], onDelete: Cascade)
   budgets   LineaPresupuesto[]
   odps      Odp[]
   events    EventVendor[]
   users     User[]
+  catalogo  ServicioProveedor[]
 
   @@index([plannerId])
   @@index([plannerId, categoria])
   @@map("vendors")
+}
+
+// ============================================================
+// Domain: ServicioProveedor (catalog items per vendor)
+// ============================================================
+
+model ServicioProveedor {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  plannerId       String   @map("planner_id") @db.Uuid
+  proveedorId     String   @map("proveedor_id") @db.Uuid
+  nombre          String
+  descripcion     String?
+  precio          Float
+  unidad          String   @default("pieza")
+  cantidadTipica  Int?     @map("cantidad_tipica")
+  categoria       String?
+  disponible      Boolean  @default(true)
+  notas           String?
+  creadoEn        DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+  actualizadoEn   DateTime @updatedAt @map("actualizado_en") @db.Timestamptz(6)
+
+  planner   Planner @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  proveedor Vendor  @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  lineas    LineaPresupuesto[]
+
+  @@index([plannerId])
+  @@index([proveedorId])
+  @@map("servicios_proveedor")
 }
 
 // ============================================================
@@ -347,15 +378,17 @@ model LineaPresupuesto {
   categoria      CategoriaProveedor
   concepto       String
   proveedorId    String?            @map("proveedor_id") @db.Uuid
+  servicioId     String?            @map("servicio_id") @db.Uuid
   montoEstimado  Float              @default(0) @map("monto_estimado")
   montoReal      Float?             @map("monto_real")
   montoPagado    Float              @default(0) @map("monto_pagado")
   estado         EstadoPago         @default(pendiente)
   notas          String?
 
-  planner  Planner @relation(fields: [plannerId], references: [id], onDelete: Cascade)
-  evento   Evento  @relation(fields: [eventoId], references: [id], onDelete: Cascade)
-  vendor   Vendor? @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
+  planner  Planner            @relation(fields: [plannerId], references: [id], onDelete: Cascade)
+  evento   Evento             @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  vendor   Vendor?            @relation(fields: [proveedorId], references: [id], onDelete: SetNull)
+  servicio ServicioProveedor? @relation(fields: [servicioId], references: [id], onDelete: SetNull)
 
   @@index([eventoId])
   @@index([plannerId])

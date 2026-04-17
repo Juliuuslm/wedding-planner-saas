@@ -16,9 +16,9 @@ import { getProveedorById, getODPsByProveedor, getEventos } from '@/lib/data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { EditarProveedorDialog } from '@/components/proveedores/EditarProveedorDialog'
+import { VendorTabsNav } from '@/components/proveedores/VendorTabsNav'
 import { cn } from '@/lib/utils'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -123,6 +123,9 @@ export default async function ProveedorPage({ params }: Props) {
         </div>
         <EditarProveedorDialog proveedor={proveedor} />
       </div>
+
+      {/* Tabs nav */}
+      <VendorTabsNav proveedorId={proveedor.id} />
 
       {/* Content grid */}
       <div className="grid gap-6 lg:grid-cols-3">

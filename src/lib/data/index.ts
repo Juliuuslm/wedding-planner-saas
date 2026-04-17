@@ -12,6 +12,7 @@ import type {
   ODP,
   Paquete,
   Presupuesto,
+  ServicioProveedor,
 } from '@/types'
 
 // Shape del getEventoFull (mismo que EventoFull en src/lib/api/eventos)
@@ -186,6 +187,19 @@ export async function getProveedorById(id: string): Promise<Proveedor | null> {
   return ser(
     await withTenant(tenant, (tx) =>
       tx.vendor.findFirst({ where: { id, plannerId: tenant.plannerId } }),
+    ),
+  )
+}
+
+// ── Catálogo de servicios del proveedor ──────────────────────
+export async function getServiciosByProveedor(proveedorId: string): Promise<ServicioProveedor[]> {
+  const tenant = await serverTenant()
+  return ser(
+    await withTenant(tenant, (tx) =>
+      tx.servicioProveedor.findMany({
+        where: { proveedorId, plannerId: tenant.plannerId },
+        orderBy: [{ categoria: 'asc' }, { nombre: 'asc' }],
+      }),
     ),
   )
 }

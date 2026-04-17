@@ -12,6 +12,8 @@ import {
   FileText,
   Download,
   ArrowRight,
+  TrendingUp,
+  Plus,
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -19,21 +21,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   getClienteById,
   getEventos,
-  getPresupuestoByEvento,
   getContratosByContraparteId,
 } from '@/lib/data'
 import { EditarClienteDialog } from '@/components/clientes/EditarClienteDialog'
 import { cn } from '@/lib/utils'
+import type { Evento, EstadoEvento } from '@/types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -53,17 +47,20 @@ function formatDate(iso: string) {
   })
 }
 
-const ESTADO_CLIENTE_MAP: Record<string, { label: string; className: string }> = {
-  activo:     { label: 'Activo',     className: 'bg-success/10 text-success border-success/20' },
-  prospecto:  { label: 'Prospecto',  className: 'bg-gold/10 text-gold border-gold/20' },
-  completado: { label: 'Completado', className: 'bg-muted text-text-muted' },
-  cancelado:  { label: 'Cancelado',  className: 'bg-danger/10 text-danger border-danger/20' },
+function formatShort(iso: string) {
+  return new Date(iso).toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
-const ESTADO_LINEA_MAP: Record<string, { label: string; className: string }> = {
-  pendiente:      { label: 'Pendiente', className: 'bg-warning/10 text-warning border-warning/30' },
-  pagado_parcial: { label: 'Parcial',   className: 'bg-gold/10 text-gold border-gold/30' },
-  pagado:         { label: 'Pagado',    className: 'bg-success/10 text-success border-success/30' },
+const ESTADO_EVENTO_MAP: Record<EstadoEvento, { label: string; className: string }> = {
+  lead:          { label: 'Lead',          className: 'bg-brand/10 text-brand border-brand/20' },
+  planificacion: { label: 'Planificación', className: 'bg-gold/10 text-gold border-gold/20' },
+  activo:        { label: 'Activo',        className: 'bg-success/10 text-success border-success/20' },
+  completado:    { label: 'Completado',    className: 'bg-muted text-text-muted' },
+  cancelado:     { label: 'Cancelado',     className: 'bg-danger/10 text-danger border-danger/20' },
 }
 
 const ESTADO_CONTRATO_MAP: Record<string, { label: string; className: string }> = {
@@ -71,6 +68,67 @@ const ESTADO_CONTRATO_MAP: Record<string, { label: string; className: string }> 
   enviado:  { label: 'Enviado',  className: 'bg-gold/10 text-gold border-gold/20' },
   firmado:  { label: 'Firmado',  className: 'bg-success/10 text-success border-success/20' },
   cancelado:{ label: 'Cancelado',className: 'bg-danger/10 text-danger border-danger/20' },
+}
+
+// Agrupa eventos: próximos (futuros activos/planif/lead), pasados (completado/cancelado o ya pasados)
+function splitEventos(eventos: Evento[]) {
+  const now = Date.now()
+  const activos: Evento[] = []
+  const pasados: Evento[] = []
+  for (const e of eventos) {
+    const futuro = new Date(e.fecha).getTime() >= now
+    const esHistorico = e.estado === 'completado' || e.estado === 'cancelado'
+    if (futuro && !esHistorico) activos.push(e)
+    else pasados.push(e)
+  }
+  activos.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+  pasados.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+  return { activos, pasados }
+}
+
+// ─── Evento row ──────────────────────────────────────────────────────────────
+
+function EventoRow({ evento }: { evento: Evento }) {
+  const estilo = ESTADO_EVENTO_MAP[evento.estado]
+  return (
+    <Link
+      href={`/eventos/${evento.id}`}
+      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
+    >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold/10">
+        <CalendarDays className="h-4 w-4 text-gold" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-text-primary">{evento.nombre}</p>
+        <div className="mt-0.5 flex items-center gap-2 text-xs text-text-muted">
+          <span>{formatShort(evento.fecha)}</span>
+          {evento.venue && (
+            <>
+              <span>·</span>
+              <span className="truncate">{evento.venue}</span>
+            </>
+          )}
+          {evento.numeroInvitados && (
+            <>
+              <span>·</span>
+              <span>{evento.numeroInvitados} invitados</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        {evento.presupuestoTotal > 0 && (
+          <span className="text-sm font-medium tabular-nums text-text-primary">
+            {formatMXN(evento.presupuestoTotal)}
+          </span>
+        )}
+        <Badge variant="outline" className={cn('text-xs', estilo.className)}>
+          {estilo.label}
+        </Badge>
+        <ArrowRight className="h-4 w-4 text-text-muted" />
+      </div>
+    </Link>
+  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -85,19 +143,23 @@ export default async function ClientePerfilPage({ params }: Props) {
   if (!cliente) notFound()
 
   const allEventos = await getEventos()
-  const evento = allEventos.find((e) => e.clienteId === cliente.id)
-  const lineas = evento
-    ? (await getPresupuestoByEvento(evento.id)).lineas
-    : []
+  const eventosDelCliente = allEventos.filter((e) => e.clienteId === cliente.id)
+  const { activos, pasados } = splitEventos(eventosDelCliente)
+
   const contratos = await getContratosByContraparteId(cliente.id, 'cliente')
 
-  const initials = (cliente.nombre[0] + cliente.apellido[0]).toUpperCase()
-  const estadoCliente = ESTADO_CLIENTE_MAP[cliente.estado]
+  const initials = ((cliente.nombre[0] ?? '') + (cliente.apellido[0] ?? '')).toUpperCase()
+
+  // Métricas CRM
+  const ltv = eventosDelCliente.reduce((s, e) => s + (e.presupuestoTotal ?? 0), 0)
+  const numEventos = eventosDelCliente.length
+  const tieneActivo = eventosDelCliente.some((e) => e.estado === 'activo' || e.estado === 'planificacion')
+  const esRepeat = numEventos > 1
 
   return (
     <div className="space-y-6">
 
-      {/* ── Back link ───────────────────────────────────────────── */}
+      {/* ── Back link ─────────────────────────────────────────── */}
       <Button
         size="sm"
         variant="ghost"
@@ -109,8 +171,8 @@ export default async function ClientePerfilPage({ params }: Props) {
         Volver a clientes
       </Button>
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14">
             <AvatarFallback className="bg-brand text-lg font-semibold text-gold">
@@ -121,25 +183,78 @@ export default async function ClientePerfilPage({ params }: Props) {
             <h1 className="text-2xl font-semibold text-text-primary">
               {cliente.nombre} {cliente.apellido}
             </h1>
-            <div className="mt-1 flex items-center gap-2">
-              <Badge variant="outline" className={estadoCliente.className}>
-                {estadoCliente.label}
-              </Badge>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {tieneActivo && (
+                <Badge variant="outline" className="border-success/30 bg-success/10 text-success">
+                  Activo
+                </Badge>
+              )}
+              {esRepeat && (
+                <Badge variant="outline" className="border-gold/30 bg-gold/15 text-gold">
+                  Cliente recurrente
+                </Badge>
+              )}
               <span className="text-xs text-text-muted">
                 Cliente desde {formatDate(cliente.creadoEn)}
               </span>
             </div>
           </div>
         </div>
-        <EditarClienteDialog cliente={cliente} />
+        <div className="flex gap-2">
+          <EditarClienteDialog cliente={cliente} />
+          <Button
+            size="sm"
+            nativeButton={false}
+            render={<Link href={`/eventos?cliente=${cliente.id}`} />}
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Nuevo evento
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Métricas CRM ───────────────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Eventos
+            </div>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-text-primary">{numEventos}</p>
+            <p className="text-xs text-text-muted">
+              {activos.length} por venir · {pasados.length} histórico
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <TrendingUp className="h-3.5 w-3.5" />
+              LTV
+            </div>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-text-primary">{formatMXN(ltv)}</p>
+            <p className="text-xs text-text-muted">Suma de presupuestos</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <FileText className="h-3.5 w-3.5" />
+              Contratos
+            </div>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-text-primary">{contratos.length}</p>
+            <p className="text-xs text-text-muted">
+              {contratos.filter((c) => c.estado === 'firmado').length} firmados
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
 
-        {/* ── Left column: contacto + evento + notas ──────────── */}
+        {/* ── Columna izquierda: contacto + notas ─────────────── */}
         <div className="space-y-6 lg:col-span-1">
-
-          {/* Contacto */}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-semibold">Datos de contacto</CardTitle>
@@ -157,56 +272,25 @@ export default async function ClientePerfilPage({ params }: Props) {
               <Separator />
               <div className="flex items-center gap-2.5 text-sm">
                 <Phone className="h-4 w-4 shrink-0 text-text-muted" />
-                <span className="text-text-primary">{cliente.telefono}</span>
+                <span className="text-text-primary">{cliente.telefono || '—'}</span>
               </div>
-              <Separator />
-              <div className="flex items-center gap-2.5 text-sm">
-                <MessageCircle className="h-4 w-4 shrink-0 text-text-muted" />
-                <span className="text-text-secondary">WhatsApp: {cliente.telefono}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Evento asociado */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Evento asociado</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {evento ? (
-                <div className="space-y-3">
-                  <p className="font-medium text-text-primary">{evento.nombre}</p>
-                  <div className="space-y-1.5 text-xs text-text-muted">
-                    <div className="flex items-center gap-1.5">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {formatDate(evento.fecha)}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5" />
-                      {evento.numeroInvitados ?? '—'} invitados
-                    </div>
-                  </div>
-                  {evento.venue && (
-                    <p className="text-xs text-text-secondary">{evento.venue}</p>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    nativeButton={false}
-                    render={<Link href={`/eventos/${evento.id}`} />}
+              {cliente.telefono && (
+                <>
+                  <Separator />
+                  <a
+                    href={`https://wa.me/${cliente.telefono.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 text-sm text-text-secondary hover:text-success"
                   >
-                    Ver evento
-                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-sm italic text-text-muted">Sin evento asociado</p>
+                    <MessageCircle className="h-4 w-4 shrink-0" />
+                    WhatsApp
+                  </a>
+                </>
               )}
             </CardContent>
           </Card>
 
-          {/* Notas */}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-semibold">Notas</CardTitle>
@@ -217,76 +301,85 @@ export default async function ClientePerfilPage({ params }: Props) {
               </p>
             </CardContent>
           </Card>
-
         </div>
 
-        {/* ── Right column: pagos + documentos ────────────────── */}
+        {/* ── Columna derecha: eventos + contratos ────────────── */}
         <div className="space-y-6 lg:col-span-2">
 
-          {/* Historial de pagos */}
+          {/* Eventos por venir */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-semibold">Historial de pagos</CardTitle>
+              <CardTitle className="text-sm font-semibold">
+                Eventos por venir
+                {activos.length > 0 && (
+                  <span className="ml-2 text-xs font-normal text-text-muted">({activos.length})</span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {lineas.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Concepto</TableHead>
-                      <TableHead className="text-right">Estimado</TableHead>
-                      <TableHead className="text-right">Pagado</TableHead>
-                      <TableHead className="text-right">Estado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {lineas.map((linea) => {
-                      const estilo = ESTADO_LINEA_MAP[linea.estado]
-                      return (
-                        <TableRow key={linea.id}>
-                          <TableCell className="text-sm">{linea.concepto}</TableCell>
-                          <TableCell className="text-right text-sm tabular-nums">
-                            {formatMXN(linea.montoEstimado)}
-                          </TableCell>
-                          <TableCell className="text-right text-sm tabular-nums">
-                            {formatMXN(linea.montoPagado)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Badge
-                              variant="outline"
-                              className={cn('text-xs', estilo.className)}
-                            >
-                              {estilo.label}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+              {activos.length > 0 ? (
+                <ul className="divide-y divide-warm-border">
+                  {activos.map((evento) => (
+                    <li key={evento.id}>
+                      <EventoRow evento={evento} />
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <p className="px-6 py-8 text-center text-sm italic text-text-muted">
-                  Sin historial de pagos
-                </p>
+                <div className="flex flex-col items-center px-6 py-10 text-center">
+                  <CalendarDays className="mb-2 h-8 w-8 text-text-muted" />
+                  <p className="text-sm text-text-primary">Sin eventos programados</p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    Crea un evento nuevo para este cliente.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-3"
+                    nativeButton={false}
+                    render={<Link href={`/eventos?cliente=${cliente.id}`} />}
+                  >
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    Nuevo evento
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Documentos / Contratos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold">Documentos</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {contratos.length > 0 ? (
+          {/* Eventos pasados */}
+          {pasados.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold">
+                  Histórico
+                  <span className="ml-2 text-xs font-normal text-text-muted">({pasados.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ul className="divide-y divide-warm-border">
+                  {pasados.map((evento) => (
+                    <li key={evento.id}>
+                      <EventoRow evento={evento} />
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Contratos */}
+          {contratos.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold">Documentos</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <ul className="divide-y divide-warm-border">
                   {contratos.map((contrato) => {
                     const estadoContrato = ESTADO_CONTRATO_MAP[contrato.estado]
                     return (
-                      <li
-                        key={contrato.id}
-                        className="flex items-center gap-3 px-6 py-3"
-                      >
+                      <li key={contrato.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/10">
                           <FileText className="h-4 w-4 text-gold" />
                         </div>
@@ -313,13 +406,9 @@ export default async function ClientePerfilPage({ params }: Props) {
                     )
                   })}
                 </ul>
-              ) : (
-                <p className="px-6 py-8 text-center text-sm italic text-text-muted">
-                  Sin documentos
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
         </div>
       </div>

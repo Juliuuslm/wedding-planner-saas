@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { CalendarRange } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EventoCard } from '@/components/eventos/EventoCard'
@@ -15,8 +16,9 @@ type FiltroFecha  = 'todos' | '30dias' | '3meses'
 
 const FILTROS_ESTADO: { value: FiltroEstado; label: string }[] = [
   { value: 'todos',         label: 'Todos' },
-  { value: 'activo',        label: 'Activos' },
+  { value: 'lead',          label: 'Leads' },
   { value: 'planificacion', label: 'Planificación' },
+  { value: 'activo',        label: 'Activos' },
   { value: 'completado',    label: 'Completados' },
 ]
 
@@ -27,10 +29,14 @@ const FILTROS_FECHA: { value: FiltroFecha; label: string }[] = [
 ]
 
 export default function EventosPage() {
-  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('todos')
+  const searchParams = useSearchParams()
+  const initialEstado = (searchParams.get('estado') as FiltroEstado | null) ?? 'todos'
+
+  const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>(initialEstado)
   const [filtroFecha, setFiltroFecha]   = useState<FiltroFecha>('todos')
   const [eventos, setEventos] = useState<Evento[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
+  const [ahoraMs] = useState(() => Date.now())
 
   useEffect(() => {
     void Promise.all([getEventos(), getClientes()]).then(([e, c]) => {
@@ -40,18 +46,17 @@ export default function EventosPage() {
   }, [])
 
   const eventosFiltrados = useMemo(() => {
-    const ahora = new Date()
     return eventos.filter((e) => {
       if (filtroEstado !== 'todos' && e.estado !== filtroEstado) return false
       if (filtroFecha !== 'todos') {
-        const fecha = new Date(e.fecha)
+        const fechaMs = new Date(e.fecha).getTime()
         const dias  = filtroFecha === '30dias' ? 30 : 90
-        const limite = new Date(ahora.getTime() + dias * 24 * 60 * 60 * 1000)
-        if (fecha < ahora || fecha > limite) return false
+        const limiteMs = ahoraMs + dias * 24 * 60 * 60 * 1000
+        if (fechaMs < ahoraMs || fechaMs > limiteMs) return false
       }
       return true
     })
-  }, [eventos, filtroEstado, filtroFecha])
+  }, [eventos, filtroEstado, filtroFecha, ahoraMs])
 
   return (
     <div className="space-y-6">

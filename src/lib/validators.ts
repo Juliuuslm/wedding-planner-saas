@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 export const estadoCliente = z.enum(['prospecto', 'activo', 'completado', 'cancelado'])
 export const tipoEvento = z.enum(['boda', 'bautizo', 'quinceanera', 'corporativo', 'otro'])
-export const estadoEvento = z.enum(['planificacion', 'activo', 'completado', 'cancelado'])
+export const estadoEvento = z.enum(['lead', 'planificacion', 'activo', 'completado', 'cancelado'])
 export const categoriaProveedor = z.enum([
   'venue', 'catering', 'fotografia', 'video', 'musica', 'flores', 'decoracion',
   'pasteleria', 'invitaciones', 'transporte', 'entretenimiento', 'iluminacion',
@@ -90,12 +90,38 @@ export const listVendorsQuery = z.object({
   categoria: categoriaProveedor.optional(),
 })
 
+// ── Servicios del proveedor (catálogo) ───────────────────────────────────
+
+export const createServicioSchema = z.object({
+  nombre: z.string().min(1),
+  descripcion: z.string().optional().nullable(),
+  precio: z.number().nonnegative(),
+  unidad: z.string().min(1).default('pieza'),
+  cantidadTipica: z.number().int().positive().optional().nullable(),
+  categoria: z.string().optional().nullable(),
+  disponible: z.boolean().default(true),
+  notas: z.string().optional().nullable(),
+})
+
+export const updateServicioSchema = createServicioSchema.partial()
+
+export const bulkServiciosSchema = z.object({
+  servicios: z.array(createServicioSchema).min(1).max(500),
+})
+
+export const listServiciosQuery = z.object({
+  q: z.string().optional(),
+  categoria: z.string().optional(),
+  disponible: z.enum(['true', 'false']).optional(),
+})
+
 // ── Budget ───────────────────────────────────────────────────────────────
 
 export const createBudgetLineSchema = z.object({
   categoria: categoriaProveedor,
   concepto: z.string().min(1),
   proveedorId: uuid.optional().nullable(),
+  servicioId: uuid.optional().nullable(),
   montoEstimado: z.number().nonnegative().default(0),
   montoReal: z.number().nonnegative().optional().nullable(),
   montoPagado: z.number().nonnegative().default(0),

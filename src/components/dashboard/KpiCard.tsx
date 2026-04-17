@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { type LucideIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -9,6 +10,7 @@ interface KpiCardProps {
   icon: LucideIcon
   iconClassName?: string
   valueClassName?: string
+  href?: string
 }
 
 export function KpiCard({
@@ -18,14 +20,15 @@ export function KpiCard({
   icon: Icon,
   iconClassName,
   valueClassName,
+  href,
 }: KpiCardProps) {
-  return (
-    <Card className="transition-shadow hover:shadow-md">
+  const content = (
+    <Card className={cn('transition-shadow', href && 'cursor-pointer hover:shadow-md hover:border-brand/30')}>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <p className="text-sm font-medium text-text-secondary">{label}</p>
-            <p className={cn('text-3xl font-bold text-text-primary', valueClassName)}>
+            <p className={cn('text-3xl font-bold text-text-primary tabular-nums', valueClassName)}>
               {value}
             </p>
             {description && (
@@ -44,4 +47,9 @@ export function KpiCard({
       </CardContent>
     </Card>
   )
+
+  if (href) {
+    return <Link href={href} className="block">{content}</Link>
+  }
+  return content
 }
